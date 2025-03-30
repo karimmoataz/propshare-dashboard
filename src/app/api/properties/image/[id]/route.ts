@@ -2,14 +2,15 @@
 import { NextResponse } from 'next/server';
 import Property from '../../../../../models/Property';
 import dbConnect from '../../../../../lib/db';
+import type { Params } from 'next/dist/shared/lib/router/utils/route-matcher';
 
 export async function GET(
   req: Request,
-  { params }: { params: Record<string, string> } // Next.js compatible type
+  context: { params: Params } // Official Next.js params type
 ) {
   try {
     await dbConnect();
-    const property = await Property.findById(params.id);
+    const property = await Property.findById(context.params.id as string);
     
     if (!property?.image) {
       return new NextResponse(null, { status: 404 });
