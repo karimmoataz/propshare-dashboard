@@ -1,9 +1,7 @@
-// src/app/api/auth/[...nextauth]/route.ts
 import NextAuth, { AuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import dbConnect from "../../../../lib/db";
 import User from "./../../../../models/User";
-import { NextRequest, NextResponse } from "next/server";
 
 export const authOptions: AuthOptions = {
   providers: [
@@ -20,23 +18,31 @@ export const authOptions: AuthOptions = {
 
         await dbConnect();
         
+        // Find user by email
         const user = await User.findOne({ 
           email: credentials.email.toLowerCase() 
-        }) as { 
-          _id: string; 
-          email: string; 
-          fullName: string; 
-          role: string; 
-          verified: boolean; 
-          comparePassword: (password: string) => Promise<boolean> 
-        };
+        }) as { _id: string; email: string; fullName: string; role: string; verified: boolean; comparePassword: (password: string) => Promise<boolean> };
 
-        if (!user) throw new Error("User not registered");
-        if (!user.verified) throw new Error("Email not verified");
-        if (user.role !== 'admin') throw new Error("Admin role required");
+        if (!user) {
+          throw new Error("User not registered");
+        }
 
+        // Check if user is verified
+        if (!user.verified) {
+          throw new Error("Email not verified");
+        }
+
+        // Check if user is an admin
+        if (user.role !== 'admin') {
+          throw new Error("Access denied: Admin role required");
+        }
+
+        // Validate password
         const isPasswordValid = await user.comparePassword(credentials.password);
-        if (!isPasswordValid) throw new Error("Invalid password");
+        
+        if (!isPasswordValid) {
+          throw new Error("Invalid password");
+        }
 
         return {
           id: user._id.toString(),
@@ -49,7 +55,7 @@ export const authOptions: AuthOptions = {
   ],
   session: {
     strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60,
+    maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   callbacks: {
     async jwt({ token, user }) {
@@ -60,9 +66,9 @@ export const authOptions: AuthOptions = {
       return token;
     },
     async session({ session, token }) {
-      if (token?.id && session.user) {
-        session.user.id = token.id;
-        session.user.role = token.role;
+      if (token && session.user) {
+        session.user.id = token.id as string;
+        session.user.role = token.role as string;
       }
       return session;
     }
@@ -75,25 +81,5 @@ export const authOptions: AuthOptions = {
 };
 
 const handler = NextAuth(authOptions);
-
-export async function GET(
-  request: NextRequest,
-  context: { params: { nextauth: string[] } }
-) {
-  return handler(request, context);
-}
-
-export async function POST(
-  request: NextRequest,
-  context: { params: { nextauth: string[] } }
-) {
-  return handler(request, context);
-}
-
-// Optional: Add other methods if needed
-export async function PUT(
-  request: NextRequest,
-  context: { params: { nextauth: string[] } }
-) {
-  return NextResponse.json({ error: "Method not allowed" }, { status: 405 });
-}
+// @ts-ignore
+export { handler as GET, handler as POST };
