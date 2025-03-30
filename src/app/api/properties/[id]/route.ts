@@ -3,18 +3,19 @@ import { getServerSession } from 'next-auth/next';
 import authOptions from '@/app/api/auth/config';
 import Property from '@/models/Property';
 import dbConnect from '@/lib/db';
-import type { Params } from 'next/dist/shared/lib/router/utils/route-matcher';
+
+type NextRouteParams = { params: { [key: string]: string } };
 
 export async function PUT(
   request: NextRequest,
-  context: { params: Params }
+  { params }: NextRouteParams
 ) {
   const session = await getServerSession(authOptions);
   if (!session || session.user.role !== 'admin') {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const id = context.params.id as string;
+  const id = params.id;
   const formData = await request.formData();
 
   // Build update data with type safety
