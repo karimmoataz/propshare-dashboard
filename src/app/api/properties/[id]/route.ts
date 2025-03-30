@@ -1,20 +1,20 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
+import { NextRequest, NextResponse } from 'next/server';
 import authOptions from '@/app/api/auth/config';
 import Property from '@/models/Property';
 import dbConnect from '@/lib/db';
 
 export async function PUT(
-  req: NextRequest,
-  context: any
+  request: NextRequest,
+  { params }: { params: Record<string, string> }
 ) {
   const session = await getServerSession(authOptions);
   if (!session || session.user.role !== 'admin') {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const id = context.params.id;
-  const formData = await req.formData();
+  const id = params.id;
+  const formData = await request.formData();
   
   interface UpdateData {
     name: FormDataEntryValue | null;
