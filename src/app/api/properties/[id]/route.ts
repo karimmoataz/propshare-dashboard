@@ -1,21 +1,24 @@
 import { getServerSession } from 'next-auth/next';
-import { NextResponse } from 'next/server';
-import { type NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import authOptions from '@/app/api/auth/config';
 import Property from '@/models/Property';
 import dbConnect from '@/lib/db';
 
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+type Params = {
+  params: {
+    id: string;
+  };
+};
+
+export async function PUT(request: NextRequest, params: Params) {
   const session = await getServerSession(authOptions);
   if (!session || session.user.role !== 'admin') {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const id = params.id;
+  const id = params.params.id;
   const formData = await request.formData();
+  
   interface UpdateData {
     name: FormDataEntryValue | null;
     currentPrice: number;
