@@ -5,17 +5,16 @@ import Property from '@/models/Property';
 import dbConnect from '@/lib/db';
 
 export async function PUT(
-  req: NextRequest,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  context: { params: { id: string } }
 ) {
   const session = await getServerSession(authOptions);
   if (!session || session.user.role !== 'admin') {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { id } = params;
-  const formData = await req.formData();
-  
+  const { id } = context.params;
+  const formData = await request.formData();
   interface UpdateData {
     name: FormDataEntryValue | null;
     currentPrice: number;
@@ -44,8 +43,8 @@ export async function PUT(
 
   try {
     await dbConnect();
-    const updatedProperty = await Property.findByIdAndUpdate(id, updateData, { 
-      new: true 
+    const updatedProperty = await Property.findByIdAndUpdate(id, updateData, {
+      new: true
     });
     
     if (!updatedProperty) {
@@ -55,7 +54,7 @@ export async function PUT(
   } catch (error) {
     console.error('Update error:', error);
     return NextResponse.json(
-      { error: 'Error updating property' }, 
+      { error: 'Error updating property' },
       { status: 500 }
     );
   }
