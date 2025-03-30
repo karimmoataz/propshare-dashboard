@@ -4,20 +4,16 @@ import authOptions from '@/app/api/auth/config';
 import Property from '@/models/Property';
 import dbConnect from '@/lib/db';
 
-type Props = {
-  params: { id: string }
-}
-
 export async function PUT(
   request: NextRequest,
-  props: Props
+  { params }: { params: { id: string } }
 ) {
   const session = await getServerSession(authOptions);
   if (!session || session.user.role !== 'admin') {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const id = props.params.id;
+  const id = params.id;
   const formData = await request.formData();
   
   interface UpdateData {
