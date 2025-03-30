@@ -36,7 +36,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
       return NextResponse.json({ error: 'Property not found' }, { status: 404 });
     }
     return NextResponse.json(updatedProperty);
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ error: 'Error updating property' }, { status: 500 });
   }
 }

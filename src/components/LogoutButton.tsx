@@ -43,7 +43,7 @@ export default function LogoutButton({
   };
 
   // Base styles for all variants
-  let baseStyles = "px-4 py-2 rounded-md font-medium transition-colors";
+  const  baseStyles = "px-4 py-2 rounded-md font-medium transition-colors";
   
   // Variant-specific styles
   let variantStyles = "";

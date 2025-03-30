@@ -44,7 +44,7 @@ export async function POST(req: Request) {
   try {
     const newProperty = await Property.create(propertyData);
     return NextResponse.json(newProperty);
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ error: 'Error creating property' }, { status: 500 });
   }
 }
