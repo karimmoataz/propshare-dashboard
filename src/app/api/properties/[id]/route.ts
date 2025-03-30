@@ -1,0 +1,42 @@
+// app/api/properties/[id]/route.ts
+import { getServerSession } from 'next-auth/next';
+import { NextResponse } from 'next/server';
+import { authOptions } from '../../auth/[...nextauth]/route';
+import Property from '../../../../models/Property';
+import dbConnect from '../../../../lib/db';
+
+export async function PUT(req: Request, { params }: { params: { id: string } }) {
+  const session = await getServerSession(authOptions);
+  if (!session || session.user.role !== 'admin') {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const { id } = params;
+  const formData = await req.formData();
+  
+  const updateData: any = {
+    name: formData.get('name'),
+    currentPrice: Number(formData.get('currentPrice')),
+    location: formData.get('location'),
+    area: Number(formData.get('area')),
+    floors: Number(formData.get('floors')),
+    rooms: Number(formData.get('rooms'))
+  };
+
+  const imageFile = formData.get('image') as File | null;
+  if (imageFile && imageFile.size > 0) {
+    updateData.image = Buffer.from(await imageFile.arrayBuffer());
+    updateData.contentType = imageFile.type;
+  }
+
+  await dbConnect();
+  try {
+    const updatedProperty = await Property.findByIdAndUpdate(id, updateData, { new: true });
+    if (!updatedProperty) {
+      return NextResponse.json({ error: 'Property not found' }, { status: 404 });
+    }
+    return NextResponse.json(updatedProperty);
+  } catch (error) {
+    return NextResponse.json({ error: 'Error updating property' }, { status: 500 });
+  }
+}
