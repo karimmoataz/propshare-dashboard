@@ -120,7 +120,9 @@ export default function PropertiesSection() {
             {filteredProperties.map((property) => (
               <tr key={property._id}>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <img 
+                  <Image
+                    width={64}
+                    height={64}
                     src={`/api/properties/image/${property._id}`} 
                     alt={property.name}
                     className="w-16 h-16 object-cover rounded"
@@ -229,7 +231,9 @@ function PropertyForm({
             {imagePreview && (
               <Image 
                 src={imagePreview} 
-                alt="Preview" 
+                alt="Preview"
+                width={200}
+                height={200}
                 className="mt-2 w-32 h-32 object-cover rounded"
               />
             )}
@@ -237,6 +241,8 @@ function PropertyForm({
               <Image 
                 src={`/api/properties/image/${initialData._id}`} 
                 alt="Current" 
+                width={200}
+                height={200}
                 className="mt-2 w-32 h-32 object-cover rounded"
               />
             )}

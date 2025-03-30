@@ -4,13 +4,10 @@ import authOptions from '@/app/api/auth/config';
 import Property from '@/models/Property';
 import dbConnect from '@/lib/db';
 
-interface Params {
-  params: {
-    id: string;
-  };
-}
-
-export async function PUT(req: NextRequest, { params }: Params) {
+export async function PUT(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
   const session = await getServerSession(authOptions);
   if (!session || session.user.role !== 'admin') {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -45,14 +42,21 @@ export async function PUT(req: NextRequest, { params }: Params) {
     updateData.contentType = imageFile.type;
   }
 
-  await dbConnect();
   try {
-    const updatedProperty = await Property.findByIdAndUpdate(id, updateData, { new: true });
+    await dbConnect();
+    const updatedProperty = await Property.findByIdAndUpdate(id, updateData, { 
+      new: true 
+    });
+    
     if (!updatedProperty) {
       return NextResponse.json({ error: 'Property not found' }, { status: 404 });
     }
     return NextResponse.json(updatedProperty);
-  } catch (_error) {
-    return NextResponse.json({ error: 'Error updating property' }, { status: 500 });
+  } catch (error) {
+    console.error('Update error:', error);
+    return NextResponse.json(
+      { error: 'Error updating property' }, 
+      { status: 500 }
+    );
   }
 }
