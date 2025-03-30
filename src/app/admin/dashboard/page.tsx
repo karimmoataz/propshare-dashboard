@@ -1,9 +1,9 @@
 import { getServerSession } from 'next-auth/next';
 import { redirect } from 'next/navigation';
 import authOptions from '../../../app/api/auth/config';
-import Header from '@/components/Header';
-import UsersSection from '@/components/UsersSection';
-import PropertiesSection from '@/components/PropertiesSection';
+import Header from '../../../components/Header';
+import UsersSection from '../../../components/UsersSection';
+import PropertiesSection from '../../../components/PropertiesSection';
 
 export default async function AdminDashboard() {
   // Check if user is authenticated and is admin
