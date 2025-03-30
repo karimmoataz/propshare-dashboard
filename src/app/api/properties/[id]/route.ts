@@ -6,7 +6,7 @@ import dbConnect from '@/lib/db';
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Record<string, string> } 
+  { params }: { params: { id: string } }
 ) {
   const session = await getServerSession(authOptions);
   if (!session || session.user.role !== 'admin') {
