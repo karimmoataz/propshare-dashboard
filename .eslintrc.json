@@ -2,5 +2,5 @@
   "extends": [],
   "rules": {},
   "overrides": [],
-  "ignorePatterns": ["**/*"] // Ignore all files
+  "ignorePatterns": ["**/*"]
 }
