@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import authOptions from '../../../api/auth/config';
-import Property from '@/models/Property';
-import dbConnect from '@/lib/db';
+import Property from '../../../../models/Property';
+import dbConnect from '../../../../lib/db';
 
 export async function PUT(
   request: NextRequest,
