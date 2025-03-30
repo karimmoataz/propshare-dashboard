@@ -1,11 +1,16 @@
-// app/api/properties/[id]/route.ts
 import { getServerSession } from 'next-auth/next';
-import { NextResponse } from 'next/server';
-import authOptions from '../../auth/config';
-import Property from '../../../../models/Property';
-import dbConnect from '../../../../lib/db';
+import { NextResponse, NextRequest } from 'next/server';
+import authOptions from '@/app/api/auth/config';
+import Property from '@/models/Property';
+import dbConnect from '@/lib/db';
 
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
+interface Params {
+  params: {
+    id: string;
+  };
+}
+
+export async function PUT(req: NextRequest, { params }: Params) {
   const session = await getServerSession(authOptions);
   if (!session || session.user.role !== 'admin') {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
