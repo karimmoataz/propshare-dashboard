@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import type { IProperty } from '../models/Property';
+import Image from 'next/image';
 
 export default function PropertiesSection() {
   const [properties, setProperties] = useState<IProperty[]>([]);
@@ -226,14 +227,14 @@ function PropertyForm({
               required={!initialData}
             />
             {imagePreview && (
-              <img 
+              <Image 
                 src={imagePreview} 
                 alt="Preview" 
                 className="mt-2 w-32 h-32 object-cover rounded"
               />
             )}
             {initialData && !imagePreview && (
-              <img 
+              <Image 
                 src={`/api/properties/image/${initialData._id}`} 
                 alt="Current" 
                 className="mt-2 w-32 h-32 object-cover rounded"

@@ -14,7 +14,18 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
   const { id } = params;
   const formData = await req.formData();
   
-  const updateData: any = {
+  interface UpdateData {
+    name: FormDataEntryValue | null;
+    currentPrice: number;
+    location: FormDataEntryValue | null;
+    area: number;
+    floors: number;
+    rooms: number;
+    image?: Buffer;
+    contentType?: string;
+  }
+
+  const updateData: UpdateData = {
     name: formData.get('name'),
     currentPrice: Number(formData.get('currentPrice')),
     location: formData.get('location'),

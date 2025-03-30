@@ -7,12 +7,14 @@
       "@typescript-eslint/no-unused-vars": [
         "warn",
         { 
-          "argsIgnorePattern": "^_", // Ignore variables starting with _
-          "varsIgnorePattern": "^_", 
-          "caughtErrorsIgnorePattern": "^_" 
+          "argsIgnorePattern": "^_",
+          "varsIgnorePattern": "^_",
+          "caughtErrorsIgnorePattern": "^_"
         }
       ],
-      "@typescript-eslint/no-explicit-any": "off" // Disable "any" type warnings
+      "@typescript-eslint/no-explicit-any": "off",
+      "prefer-const": "error",
+      "@next/next/no-img-element": "warn"
     },
     "parser": "@typescript-eslint/parser",
     "parserOptions": {
