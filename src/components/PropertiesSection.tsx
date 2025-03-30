@@ -148,7 +148,7 @@ export default function PropertiesSection() {
 
       {/* Add Property Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+        <div className="fixed inset-0 bg-black/30 bg-opacity-50 flex items-center justify-center">
           <div className="bg-white p-6 rounded-lg w-full max-w-2xl">
             <h3 className="text-lg font-medium mb-4">Add New Property</h3>
             <PropertyForm
@@ -166,7 +166,7 @@ export default function PropertiesSection() {
 
       {/* Edit Property Modal */}
       {editingProperty && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+        <div className="fixed inset-0 bg-black/30 bg-opacity-50 flex items-center justify-center">
           <div className="bg-white p-6 rounded-lg w-full max-w-2xl">
             <h3 className="text-lg font-medium mb-4">Edit Property</h3>
             <PropertyForm
