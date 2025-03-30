@@ -6,13 +6,14 @@ import dbConnect from '@/lib/db';
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
   const session = await getServerSession(authOptions);
   if (!session || session.user.role !== 'admin') {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const id = context.params.id;
   const formData = await request.formData();
   
   interface UpdateData {
@@ -36,23 +37,21 @@ export async function PUT(
   };
 
   const imageFile = formData.get('image') as File | null;
-  if (imageFile?.size) {
+  if (imageFile && imageFile.size > 0) {
     updateData.image = Buffer.from(await imageFile.arrayBuffer());
     updateData.contentType = imageFile.type;
   }
 
   try {
     await dbConnect();
-    const updatedProperty = await Property.findByIdAndUpdate(
-      params.id,
-      updateData,
-      { new: true }
-    );
+    const updatedProperty = await Property.findByIdAndUpdate(id, updateData, {
+      new: true
+    });
     
-    return updatedProperty 
-      ? NextResponse.json(updatedProperty)
-      : NextResponse.json({ error: 'Property not found' }, { status: 404 });
-      
+    if (!updatedProperty) {
+      return NextResponse.json({ error: 'Property not found' }, { status: 404 });
+    }
+    return NextResponse.json(updatedProperty);
   } catch (error) {
     console.error('Update error:', error);
     return NextResponse.json(
