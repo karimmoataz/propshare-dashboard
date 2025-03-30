@@ -6,45 +6,52 @@ import dbConnect from '@/lib/db';
 
 export async function PUT(
   request: NextRequest,
-  context: { params: { id: string } } // Exact type declaration
+  { params }: { params: { id: any } }
 ) {
   const session = await getServerSession(authOptions);
   if (!session || session.user.role !== 'admin') {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  // Validate ID format
-  if (!/^[0-9a-fA-F]{24}$/.test(context.params.id)) {
-    return NextResponse.json({ error: 'Invalid ID format' }, { status: 400 });
+  const id = params.id;
+  const formData = await request.formData();
+  
+  interface UpdateData {
+    name: FormDataEntryValue | null;
+    currentPrice: number;
+    location: FormDataEntryValue | null;
+    area: number;
+    floors: number;
+    rooms: number;
+    image?: Buffer;
+    contentType?: string;
   }
 
-  const formData = await request.formData();
-
-  // Build update data
-  const updateData = {
+  const updateData: UpdateData = {
     name: formData.get('name'),
     currentPrice: Number(formData.get('currentPrice')),
     location: formData.get('location'),
     area: Number(formData.get('area')),
     floors: Number(formData.get('floors')),
-    rooms: Number(formData.get('rooms')),
-    ...(formData.has('image') && {
-      image: Buffer.from(await (formData.get('image') as File).arrayBuffer()),
-      contentType: (formData.get('image') as File).type
-    })
+    rooms: Number(formData.get('rooms'))
   };
+
+  const imageFile = formData.get('image') as File | null;
+  if (imageFile && imageFile.size > 0) {
+    updateData.image = Buffer.from(await imageFile.arrayBuffer());
+    updateData.contentType = imageFile.type;
+  }
 
   try {
     await dbConnect();
-    const updatedProperty = await Property.findByIdAndUpdate(
-      context.params.id,
-      updateData,
-      { new: true }
-    );
-
-    return updatedProperty 
-      ? NextResponse.json(updatedProperty)
-      : NextResponse.json({ error: 'Property not found' }, { status: 404 });
+    const updatedProperty = await Property.findByIdAndUpdate(id, updateData, {
+      new: true
+    });
+    
+    if (!updatedProperty) {
+      return NextResponse.json({ error: 'Property not found' }, { status: 404 });
+    }
+    return NextResponse.json(updatedProperty);
   } catch (error) {
     console.error('Update error:', error);
     return NextResponse.json(
