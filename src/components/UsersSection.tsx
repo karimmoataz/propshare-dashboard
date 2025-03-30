@@ -174,6 +174,15 @@ function EditForm({ user, onClose, onSave }: { user: IUser; onClose: () => void;
           />
         </div>
         <div>
+          <label className="block text-sm font-medium text-gray-700">phone</label>
+          <input
+            name="phone"
+            value={formData.phone}
+            onChange={handleChange}
+            className="mt-1 block w-full border rounded-md p-2"
+          />
+        </div>
+        <div>
           <label className="block text-sm font-medium text-gray-700">Balance</label>
           <input
             name="balance"
