@@ -1,7 +1,7 @@
 // app/api/properties/route.ts
 import { getServerSession } from 'next-auth/next';
 import { NextResponse } from 'next/server';
-import { authOptions } from '../auth/[...nextauth]/route';
+import authOptions from '../auth/config';
 import Property from '../../../models/Property';
 import dbConnect from '../../../lib/db';
 import { v4 as uuidv4 } from 'uuid';
