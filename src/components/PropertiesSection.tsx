@@ -370,7 +370,7 @@ function PropertyForm({
 
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700">Area (M2) *</label>
+              <label className="block text-sm font-medium text-gray-700">Area (M&sup2;) *</label>
               <input
                 name="area"
                 type="number"
