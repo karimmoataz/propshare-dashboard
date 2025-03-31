@@ -103,3 +103,38 @@ export async function OPTIONS() {
     },
   });
 }
+
+export async function DELETE(
+  request: NextRequest,
+  context: { params: { id: string } }
+) {
+  // Authentication check
+  const session = await getServerSession(authOptions);
+  if (!session || session.user.role !== 'admin') {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  
+  // Get property ID from params
+  const getParams = async () => context.params;
+  const { id } = await getParams();
+  
+  try {
+    await dbConnect();
+    
+    // Find and delete the property
+    const deletedProperty = await Property.findByIdAndDelete(id);
+    
+    if (!deletedProperty) {
+      return NextResponse.json({ error: 'Property not found' }, { status: 404 });
+    }
+    
+    return NextResponse.json({ message: 'Property deleted successfully' });
+    
+  } catch (error) {
+    console.error('Delete error:', error);
+    return NextResponse.json(
+      { error: 'Error deleting property' },
+      { status: 500 }
+    );
+  }
+}

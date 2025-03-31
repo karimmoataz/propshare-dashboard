@@ -49,6 +49,42 @@ export default function PropertiesSection() {
       setError('Error adding property');
     }
   };
+  // Function to handle property deletion
+const handleDeleteProperty = async (propertyId: string) => {
+  if (!propertyId) return;
+  
+  // Show confirmation dialog
+  const confirmDelete = window.confirm("Are you sure you want to delete this property? This action cannot be undone.");
+  
+  if (!confirmDelete) return;
+  
+  try {
+    const response = await fetch(`/api/properties/${propertyId}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to delete property');
+    }
+    
+    setProperties(properties.filter(prop => prop._id !== propertyId));
+    
+    alert('Property deleted successfully');
+
+    
+  } catch (error) {
+    console.error('Error deleting property:', error);
+    if (error instanceof Error) {
+      alert(`Error: ${error.message}`);
+    } else {
+      alert('An unknown error occurred');
+    }
+  }
+};
 
   const handleUpdateProperty = async (formData: FormData) => {
     if (!editingProperty) return;
@@ -147,12 +183,12 @@ export default function PropertiesSection() {
                   >
                     Edit
                   </button>
-                  {/* <button
+                  <button
                     onClick={() => handleDeleteProperty(property._id)}
                     className="text-red-600 hover:text-red-900"
                   >
                     Delete
-                  </button> */}
+                  </button>
                 </td>
               </tr>
             ))}
