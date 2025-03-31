@@ -24,6 +24,7 @@ export async function PUT(
     interface UpdateData {
       name: FormDataEntryValue | null;
       currentPrice: number;
+      sharePrice: number;
       location: FormDataEntryValue | null;
       area: number;
       floors: number;
@@ -35,6 +36,7 @@ export async function PUT(
     const updateData: UpdateData = {
       name: formData.get('name'),
       currentPrice: Number(formData.get('currentPrice')),
+      sharePrice: 0, // Will be calculated below
       location: formData.get('location'),
       area: Number(formData.get('area')),
       floors: Number(formData.get('floors')),
@@ -55,8 +57,10 @@ export async function PUT(
       return NextResponse.json({ error: 'Property not found' }, { status: 404 });
     }
     
-    // Check if price is changing and update previousPrices if needed
+    // Calculate share price using the formula: currentPrice / numberOfShares
     const newPrice = updateData.currentPrice;
+    updateData.sharePrice = newPrice / currentProperty.numberOfShares;
+    
     if (newPrice !== currentProperty.currentPrice) {
       // Update operation that pushes the old price to previousPrices array
       const updatedProperty = await Property.findByIdAndUpdate(
@@ -70,7 +74,7 @@ export async function PUT(
       
       return NextResponse.json(updatedProperty);
     } else {
-      // No price change, just update other fields
+      // No price change, but we still update the share price in case numberOfShares has changed
       const updatedProperty = await Property.findByIdAndUpdate(
         id,
         updateData,
