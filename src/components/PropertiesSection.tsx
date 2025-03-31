@@ -30,9 +30,7 @@ export default function PropertiesSection() {
   }, []);
 
   const filteredProperties = properties.filter(property =>
-    property.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    property.shareId.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+    property.name.toLowerCase().includes(searchTerm.toLowerCase()));
 
   const handleAddProperty = async (formData: FormData) => {
     try {
@@ -110,9 +108,10 @@ export default function PropertiesSection() {
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Image</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Current Price</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Location</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Share ID</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Shares</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Share Price</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Available</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
             </tr>
           </thead>
@@ -123,30 +122,43 @@ export default function PropertiesSection() {
                   <Image
                     width={64}
                     height={64}
-                    src={`/api/properties/image/${property._id}`} 
+                    src={`/api/properties/image/${property._id}`}
                     alt={property.name}
                     className="w-16 h-16 object-cover rounded"
                   />
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">{property.name}</td>
-                <td className="px-6 py-4 whitespace-nowrap">${property.currentPrice.toLocaleString()}</td>
-                <td className="px-6 py-4 whitespace-nowrap">{property.location}</td>
-                <td className="px-6 py-4 whitespace-nowrap">{property.shareId}</td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  ${property.currentPrice.toLocaleString()}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  {property.numberOfShares.toLocaleString()}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  ${property.sharePrice.toFixed(2)}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  {property.availableShares.toLocaleString()}
+                </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <button
                     onClick={() => setEditingProperty(property)}
-                    className="text-blue-600 hover:text-blue-900"
+                    className="text-blue-600 hover:text-blue-900 mr-2"
                   >
                     Edit
                   </button>
+                  {/* <button
+                    onClick={() => handleDeleteProperty(property._id)}
+                    className="text-red-600 hover:text-red-900"
+                  >
+                    Delete
+                  </button> */}
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-
-      {/* Add Property Modal */}
       {showAddModal && (
         <div className="fixed inset-0 bg-black/30 bg-opacity-50 flex items-center justify-center">
           <div className="bg-white p-6 rounded-lg w-full max-w-2xl">
@@ -163,8 +175,6 @@ export default function PropertiesSection() {
           </div>
         </div>
       )}
-
-      {/* Edit Property Modal */}
       {editingProperty && (
         <div className="fixed inset-0 bg-black/30 bg-opacity-50 flex items-center justify-center">
           <div className="bg-white p-6 rounded-lg w-full max-w-2xl">
@@ -200,6 +210,17 @@ function PropertyForm({
   onImageChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [sharePrice, setSharePrice] = useState(
+    initialData?.sharePrice || 0
+  );
+
+  const calculateSharePrice = (currentPrice: string, shares: string) => {
+    const price = parseFloat(currentPrice);
+    const shareCount = parseFloat(shares);
+    if (!isNaN(price) && !isNaN(shareCount) && shareCount > 0) {
+      setSharePrice(price / shareCount);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -219,7 +240,7 @@ function PropertyForm({
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">Image</label>
+          <label className="block text-sm font-medium text-gray-700">Image</label>
             <input
               type="file"
               name="image"
@@ -260,14 +281,44 @@ function PropertyForm({
             />
           </div>
 
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Current Price ($) *</label>
+              <input
+                name="currentPrice"
+                type="number"
+                defaultValue={initialData?.currentPrice || ''}
+                className="mt-1 block w-full border rounded-md p-2"
+                required
+                onChange={(e) => calculateSharePrice(
+                  e.target.value, 
+                  (document.querySelector('input[name="numberOfShares"]') as HTMLInputElement)?.value
+                )}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Total Shares *</label>
+              <input
+                name="numberOfShares"
+                type="number"
+                defaultValue={initialData?.numberOfShares || ''}
+                className="mt-1 block w-full border rounded-md p-2"
+                required
+                onChange={(e) => calculateSharePrice(
+                  (document.querySelector('input[name="currentPrice"]') as HTMLInputElement)?.value,
+                  e.target.value
+                )}
+              />
+            </div>
+          </div>
+
           <div>
-            <label className="block text-sm font-medium text-gray-700">Current Price ($) *</label>
+            <label className="block text-sm font-medium text-gray-700">Share Price</label>
             <input
-              name="currentPrice"
-              type="number"
-              defaultValue={initialData?.currentPrice || ''}
-              className="mt-1 block w-full border rounded-md p-2"
-              required
+              value={sharePrice.toFixed(2)}
+              className="mt-1 block w-full border rounded-md p-2 bg-gray-100"
+              readOnly
             />
           </div>
 
@@ -315,18 +366,6 @@ function PropertyForm({
               />
             </div>
           </div>
-
-          {initialData && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Share ID</label>
-              <input
-                name="shareId"
-                defaultValue={initialData.shareId}
-                className="mt-1 block w-full border rounded-md p-2 bg-gray-100"
-                readOnly
-              />
-            </div>
-          )}
         </div>
       </div>
 

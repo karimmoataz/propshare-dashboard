@@ -13,11 +13,11 @@ export async function PUT(
   if (!session || session.user.role !== 'admin') {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
-
+  
   // Proper async params handling
   const getParams = async () => context.params;
   const { id } = await getParams();
-
+  
   try {
     const formData = await request.formData();
     
@@ -31,7 +31,7 @@ export async function PUT(
       image?: Buffer;
       contentType?: string;
     }
-
+    
     const updateData: UpdateData = {
       name: formData.get('name'),
       currentPrice: Number(formData.get('currentPrice')),
@@ -40,23 +40,46 @@ export async function PUT(
       floors: Number(formData.get('floors')),
       rooms: Number(formData.get('rooms'))
     };
-
+    
     const imageFile = formData.get('image') as File | null;
     if (imageFile && imageFile.size > 0) {
       updateData.image = Buffer.from(await imageFile.arrayBuffer());
       updateData.contentType = imageFile.type;
     }
-
-    await dbConnect();
-    const updatedProperty = await Property.findByIdAndUpdate(id, updateData, {
-      new: true
-    });
     
-    if (!updatedProperty) {
+    await dbConnect();
+    
+    // First, get the current property to check if price is changing
+    const currentProperty = await Property.findById(id);
+    if (!currentProperty) {
       return NextResponse.json({ error: 'Property not found' }, { status: 404 });
     }
     
-    return NextResponse.json(updatedProperty);
+    // Check if price is changing and update previousPrices if needed
+    const newPrice = updateData.currentPrice;
+    if (newPrice !== currentProperty.currentPrice) {
+      // Update operation that pushes the old price to previousPrices array
+      const updatedProperty = await Property.findByIdAndUpdate(
+        id,
+        {
+          ...updateData,
+          $push: { previousPrices: currentProperty.currentPrice }
+        },
+        { new: true }
+      );
+      
+      return NextResponse.json(updatedProperty);
+    } else {
+      // No price change, just update other fields
+      const updatedProperty = await Property.findByIdAndUpdate(
+        id,
+        updateData,
+        { new: true }
+      );
+      
+      return NextResponse.json(updatedProperty);
+    }
+    
   } catch (error) {
     console.error('Update error:', error);
     return NextResponse.json(

@@ -1,4 +1,3 @@
-// models/Property.ts
 import mongoose, { Document, Schema } from 'mongoose';
 
 export interface IProperty extends Document {
@@ -12,7 +11,14 @@ export interface IProperty extends Document {
     area: number;
     floors: number;
     rooms: number;
-    shareId: string;
+    numberOfShares: number;
+    sharePrice: number;
+    availableShares: number;
+    balance: number;
+    shares: Array<{
+        userId: mongoose.Types.ObjectId;
+        shares: number;
+    }>;
 }
 
 const PropertySchema = new Schema<IProperty>({
@@ -25,16 +31,27 @@ const PropertySchema = new Schema<IProperty>({
     area: { type: Number, required: true },
     floors: { type: Number, required: true },
     rooms: { type: Number, required: true },
-    shareId: { type: String, required: true, unique: true }
-}, { timestamps: true });
-
-PropertySchema.pre('save', function(next) {
-  if (this.isModified('currentPrice')) {
-    this.previousPrices.push(this.currentPrice);
-  }
-  next();
+    numberOfShares: { type: Number, required: true },
+    sharePrice: { type: Number, required: true },
+    availableShares: { type: Number, required: true },
+    balance: { type: Number, default: 0 },
+    shares: [{
+        userId: { 
+            type: Schema.Types.ObjectId,
+            ref: 'User',
+            required: true 
+        },
+        shares: { 
+            type: Number,
+            required: true,
+            min: 0
+        }
+    }]
+}, { 
+    timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true } 
 });
 
 const Property = mongoose.models.Property || mongoose.model<IProperty>('Property', PropertySchema);
-
 export default Property;

@@ -1,50 +1,114 @@
-// app/api/properties/route.ts
 import { getServerSession } from 'next-auth/next';
 import { NextResponse } from 'next/server';
 import authOptions from '../auth/config';
 import Property from '../../../models/Property';
 import dbConnect from '../../../lib/db';
-import { v4 as uuidv4 } from 'uuid';
+import { File } from 'buffer';
 
 export async function GET() {
-  const session = await getServerSession(authOptions);
-  if (!session || session.user.role !== 'admin') {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+    const session = await getServerSession(authOptions);
+    if (!session || session.user.role !== 'admin') {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
-  await dbConnect();
-  const properties = await Property.find({});
-  return NextResponse.json(properties);
+    try {
+        await dbConnect();
+        const properties = await Property.find({})
+            .select('-image -__v')
+            .lean();
+        return NextResponse.json(properties);
+    } catch (error) {
+        console.error('Fetch error:', error);
+        return NextResponse.json(
+            { error: 'Error fetching properties' },
+            { status: 500 }
+        );
+    }
 }
 
 export async function POST(req: Request) {
-  const session = await getServerSession(authOptions);
-  if (!session || session.user.role !== 'admin') {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+    const session = await getServerSession(authOptions);
+    if (!session || session.user.role !== 'admin') {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
-  await dbConnect();
-  const formData = await req.formData();
-  
-  const imageFile = formData.get('image') as File;
-  const imageBuffer = Buffer.from(await imageFile.arrayBuffer());
-  
-  const propertyData = {
-    name: formData.get('name'),
-    image: imageBuffer,
-    contentType: imageFile.type,
-    currentPrice: Number(formData.get('currentPrice')),
-    location: formData.get('location'),
-    area: Number(formData.get('area')),
-    floors: Number(formData.get('floors')),
-    rooms: Number(formData.get('rooms')),
-    shareId: uuidv4()
-  };
+    try {
+        await dbConnect();
+        const formData = await req.formData();
 
-  try {
-    const newProperty = await Property.create(propertyData);
-    return NextResponse.json(newProperty);
-  } catch (_error) {
-    return NextResponse.json({ error: 'Error creating property' }, { status: 500 });
-  }
+        // Validate image
+        const imageFile = formData.get('image') as File;
+        if (!imageFile || !imageFile.type.startsWith('image/')) {
+            return NextResponse.json(
+                { error: 'Valid image file required' },
+                { status: 400 }
+            );
+        }
+
+        // Parse numeric fields
+        const numericFields = [
+            'currentPrice',
+            'numberOfShares',
+            'area',
+            'floors',
+            'rooms'
+        ];
+        const fieldValues: { [key: string]: number } = {};
+
+        for (const field of numericFields) {
+            const value = Number(formData.get(field));
+            if (isNaN(value) || value <= 0) {
+                return NextResponse.json(
+                    { error: `Invalid ${field} value` },
+                    { status: 400 }
+                );
+            }
+            fieldValues[field] = value;
+        }
+
+        // Validate text fields
+        const textFields = ['name', 'location'];
+        for (const field of textFields) {
+            if (!formData.get(field)?.toString().trim()) {
+                return NextResponse.json(
+                    { error: `${field} is required` },
+                    { status: 400 }
+                );
+            }
+        }
+
+        // Calculate derived values
+        const sharePrice = fieldValues.currentPrice / fieldValues.numberOfShares;
+        const imageBuffer = Buffer.from(await imageFile.arrayBuffer());
+
+        const propertyData = {
+            name: formData.get('name')!.toString(),
+            image: imageBuffer,
+            contentType: imageFile.type,
+            currentPrice: fieldValues.currentPrice,
+            previousPrices: [],
+            location: formData.get('location')!.toString(),
+            area: fieldValues.area,
+            floors: fieldValues.floors,
+            rooms: fieldValues.rooms,
+            numberOfShares: fieldValues.numberOfShares,
+            sharePrice: Number(sharePrice.toFixed(2)),
+            availableShares: fieldValues.numberOfShares,
+            balance: 0,
+            shares: []
+        };
+
+        const newProperty = await Property.create(propertyData);
+        const responseData = newProperty.toObject();
+        delete responseData.image;
+
+        return NextResponse.json(responseData, { status: 201 });
+
+    } catch (error) {
+        console.error('Creation error:', error);
+        return NextResponse.json(
+            { error: 'Server error processing request' },
+            { status: 500 }
+        );
+    }
 }
