@@ -18,6 +18,27 @@ export interface IUser extends Document {
   resetPasswordExpires?: Date;
   oldPasswords: string[];
   comparePassword(candidatePassword: string): Promise<boolean>;
+  idVerification?: {
+    nationalId?: string;
+    status?: 'not_submitted' | 'pending' | 'verified' | 'rejected';
+    frontId?: {
+      data: Buffer;
+      contentType: string;
+      uploadDate?: Date;
+    };
+    backId?: {
+      data: Buffer;
+      contentType: string;
+      uploadDate?: Date;
+    };
+    selfie?: {
+      data: Buffer;
+      contentType: string;
+      uploadDate?: Date;
+    };
+    rejectionReason?: string;
+    verifiedDate?: Date;
+  };
 }
 
 // Check if the model already exists to prevent overwrite during hot reloads
@@ -37,6 +58,27 @@ const UserSchema = new Schema<IUser>(
     resetPasswordToken: String,
     resetPasswordExpires: Date,
     oldPasswords: [String],
+    idVerification: {
+      nationalId: { type: String },
+      status: { type: String, enum: ['not_submitted', 'pending', 'verified', 'rejected'], default: 'not_submitted' },
+      frontId: {
+        data: Buffer,
+        contentType: String,
+        uploadDate: { type: Date, default: Date.now }
+      },
+      backId: {
+        data: Buffer,
+        contentType: String,
+        uploadDate: { type: Date, default: Date.now }
+      },
+      selfie: {
+        data: Buffer,
+        contentType: String,
+        uploadDate: { type: Date, default: Date.now }
+      },
+      rejectionReason: String,
+      verifiedDate: Date
+    }
   },
   { timestamps: true }
 );

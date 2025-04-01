@@ -4,6 +4,7 @@ import authOptions from '../../../app/api/auth/config';
 import Header from '../../../components/Header';
 import UsersSection from '../../../components/UsersSection';
 import PropertiesSection from '../../../components/PropertiesSection';
+import VerificationSection from '../../../components/VerificationSection';
 
 export default async function AdminDashboard() {
   // Check if user is authenticated and is admin
@@ -29,6 +30,10 @@ export default async function AdminDashboard() {
             <div className="border-4 border-dashed border-gray-200 rounded-lg p-4 my-5">
                 <h3 className="mb-1">Properties Management</h3>
                 <PropertiesSection />
+            </div>
+            <div className="border-4 border-dashed border-gray-200 rounded-lg p-4 my-5">
+                <h3 className="mb-1">Verification Management</h3>
+                <VerificationSection />
             </div>
           </div>
         </div>
