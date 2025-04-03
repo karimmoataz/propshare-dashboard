@@ -5,6 +5,7 @@ import type { IUser } from '../models/User';
 
 export default function VerificationSection() {
   const [users, setUsers] = useState<IUser[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedUser, setSelectedUser] = useState<IUser | null>(null);
@@ -25,6 +26,12 @@ export default function VerificationSection() {
     };
     fetchPendingVerifications();
   }, []);
+
+  const filteredUsers = users.filter(user => 
+    user.email?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    user.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.idVerification?.nationalId?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const handleVerification = async (status: 'verified' | 'rejected') => {
     if (!selectedUser) return;
@@ -55,6 +62,16 @@ export default function VerificationSection() {
 
   return (
     <div className="mt-8">
+      <div className="mb-4">
+        <input
+          type="text"
+          placeholder="Search by email..."
+          className="border p-2 w-full rounded-lg"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+      </div>
+
       <div className="bg-white shadow overflow-hidden rounded-lg">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
@@ -66,55 +83,66 @@ export default function VerificationSection() {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {users.map((user) => (
-              <tr key={String(user._id)}>
-                <td className="px-6 py-4">
-                  <div className="font-medium">{user.fullName}</div>
-                  <div className="text-gray-500">{user.email}</div>
-                </td>
-                <td className="px-6 py-4">{user.idVerification?.nationalId}</td>
-                <td className="px-6 py-4">
-                  <div className="flex gap-4">
-                    {user.idVerification?.frontId && (
-                      <img 
-                        src={`data:${user.idVerification.frontId.contentType};base64,${user.idVerification.frontId.data}`}
-                        className="h-20 w-32 object-cover border"
-                        alt="Front ID"
-                      />
-                    )}
-                    {user.idVerification?.backId && (
-                      <img 
-                        src={`data:${user.idVerification.backId.contentType};base64,${user.idVerification.backId.data}`}
-                        className="h-20 w-32 object-cover border"
-                        alt="Back ID"
-                      />
-                    )}
-                    {user.idVerification?.selfie && (
-                      <img 
-                        src={`data:${user.idVerification.selfie.contentType};base64,${user.idVerification.selfie.data}`}
-                        className="h-20 w-32 object-cover border"
-                        alt="Selfie"
-                      />
-                    )}
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <button
-                    onClick={() => setSelectedUser(user)}
-                    className="text-blue-600 hover:text-blue-900 mr-4"
-                  >
-                    Review
-                  </button>
+            {filteredUsers.length > 0 ? (
+              filteredUsers.map((user) => (
+                <tr key={String(user._id)}>
+                  <td className="px-6 py-4">
+                    <div className="font-medium">{user.fullName}</div>
+                    <div className="text-gray-500">{user.email}</div>
+                  </td>
+                  <td className="px-6 py-4">{user.idVerification?.nationalId}</td>
+                  <td className="px-6 py-4">
+                    <div className="flex gap-4">
+                      {user.idVerification?.frontId && (
+                        <img 
+                          src={`data:${user.idVerification.frontId.contentType};base64,${user.idVerification.frontId.data}`}
+                          className="h-20 w-32 object-cover border"
+                          alt="Front ID"
+                          loading="lazy"
+                        />
+                      )}
+                      {user.idVerification?.backId && (
+                        <img 
+                          src={`data:${user.idVerification.backId.contentType};base64,${user.idVerification.backId.data}`}
+                          className="h-20 w-32 object-cover border"
+                          alt="Back ID"
+                          loading="lazy"
+                        />
+                      )}
+                      {user.idVerification?.selfie && (
+                        <img 
+                          src={`data:${user.idVerification.selfie.contentType};base64,${user.idVerification.selfie.data}`}
+                          className="h-20 w-32 object-cover border"
+                          alt="Selfie"
+                          loading="lazy"
+                        />
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <button
+                      onClick={() => setSelectedUser(user)}
+                      className="text-blue-600 hover:text-blue-900 mr-4"
+                    >
+                      Review
+                    </button>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={4} className="px-6 py-4 text-center text-gray-500">
+                  No verification requests matching your search criteria
                 </td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
       </div>
 
       {selectedUser && (
         <div className="fixed inset-0 bg-black/30 backdrop-blur-md flex items-center justify-center">
-          <div className="bg-white p-6 rounded-lg w-full m-96">
+          <div className="bg-white p-6 rounded-lg w-full max-w-3xl">
             <h3 className="text-lg font-medium mb-4">Verify Identity</h3>
             <div className="grid grid-cols-2 gap-4 mb-4">
               <div>
@@ -133,6 +161,7 @@ export default function VerificationSection() {
                   src={`data:${selectedUser.idVerification.frontId.contentType};base64,${selectedUser.idVerification.frontId.data}`}
                   className="h-48 w-full object-contain border"
                   alt="Front ID"
+                  loading="lazy"
                 />
               )}
               {selectedUser.idVerification?.backId && (
@@ -140,6 +169,7 @@ export default function VerificationSection() {
                   src={`data:${selectedUser.idVerification.backId.contentType};base64,${selectedUser.idVerification.backId.data}`}
                   className="h-48 w-full object-contain border"
                   alt="Back ID"
+                  loading="lazy"
                 />
               )}
               {selectedUser.idVerification?.selfie && (
@@ -147,6 +177,7 @@ export default function VerificationSection() {
                   src={`data:${selectedUser.idVerification.selfie.contentType};base64,${selectedUser.idVerification.selfie.data}`}
                   className="h-48 w-full object-contain border"
                   alt="Selfie"
+                  loading="lazy"
                 />
               )}
             </div>

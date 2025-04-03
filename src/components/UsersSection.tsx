@@ -7,8 +7,10 @@ export default function UsersSection() {
   const [users, setUsers] = useState<IUser[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [editingUser, setEditingUser] = useState<IUser | null>(null);
+  const [viewingIdUser, setViewingIdUser] = useState<IUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [isUpdatingVerification, setIsUpdatingVerification] = useState(false);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -50,6 +52,32 @@ export default function UsersSection() {
     }
   };
 
+  const handleVerificationUpdate = async (status: 'verified' | 'rejected' | 'pending') => {
+    if (!viewingIdUser) return;
+    
+    setIsUpdatingVerification(true);
+    try {
+      const response = await fetch(`/api/verifications/${viewingIdUser._id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          status,
+          rejectionReason: status === 'rejected' ? 'Verification revoked by administrator' : undefined 
+        }),
+      });
+
+      if (!response.ok) throw new Error('Failed to update verification');
+
+      const updatedUser = await response.json();
+      setUsers(users.map(user => user._id === updatedUser._id ? updatedUser : user));
+      setViewingIdUser(updatedUser);
+      setIsUpdatingVerification(false);
+    } catch (err) {
+      setError('Error updating verification');
+      setIsUpdatingVerification(false);
+    }
+  };
+
   if (isLoading) return <div className="p-4">Loading users...</div>;
   if (error) return <div className="p-4 text-red-500">{error}</div>;
 
@@ -82,14 +110,20 @@ export default function UsersSection() {
                 <td className="px-6 py-4 whitespace-nowrap">{user.fullName}</td>
                 <td className="px-6 py-4 whitespace-nowrap">{user.email}</td>
                 <td className="px-6 py-4 whitespace-nowrap">{user.username}</td>
-                <td className="px-6 py-4 whitespace-nowrap">${user.balance.toFixed(2)}</td>
+                <td className="px-6 py-4 whitespace-nowrap">${typeof user.balance === 'number' ? user.balance.toFixed(2) : '0.00'}</td>
                 <td className="px-6 py-4 whitespace-nowrap capitalize">{user.role}</td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <button
                     onClick={() => setEditingUser(user)}
-                    className="text-blue-600 hover:text-blue-900"
+                    className="text-blue-600 hover:text-blue-900 mr-3"
                   >
                     Edit
+                  </button>
+                  <button
+                    onClick={() => setViewingIdUser(user)}
+                    className="text-green-600 hover:text-green-900"
+                  >
+                    View ID
                   </button>
                 </td>
               </tr>
@@ -107,6 +141,147 @@ export default function UsersSection() {
               onClose={() => setEditingUser(null)}
               onSave={handleSave}
             />
+          </div>
+        </div>
+      )}
+
+      {viewingIdUser && (
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-md flex items-center justify-center">
+          <div className="bg-white p-6 rounded-lg w-full max-w-3xl">
+            <h3 className="text-lg font-medium mb-4">ID Verification Information</h3>
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Full Name</label>
+                <p className="mt-1">{viewingIdUser.fullName}</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">National ID</label>
+                <p className="mt-1">{viewingIdUser.idVerification?.nationalId || 'Not provided'}</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Phone Number</label>
+                <p className="mt-1">{viewingIdUser.phone || 'Not provided'}</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Verification Status</label>
+                <div className="mt-1 flex items-center gap-2">
+                  <span className={`capitalize ${
+                    viewingIdUser.idVerification?.status === 'verified' ? 'text-green-600' :
+                    viewingIdUser.idVerification?.status === 'rejected' ? 'text-red-600' :
+                    'text-yellow-600'
+                  }`}>
+                    {viewingIdUser.idVerification?.status || 'Not submitted'}
+                  </span>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex gap-4 mb-6">
+              {viewingIdUser.idVerification?.frontId ? (
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Front ID</label>
+                  <img 
+                    src={`data:${viewingIdUser.idVerification.frontId.contentType};base64,${viewingIdUser.idVerification.frontId.data}`}
+                    className="h-48 w-full object-contain border"
+                    alt="Front ID"
+                    loading="lazy"
+                  />
+                </div>
+              ) : (
+                <div className="flex-1 border p-4 flex items-center justify-center bg-gray-50">
+                  <p className="text-gray-500">No front ID image</p>
+                </div>
+              )}
+              
+              {viewingIdUser.idVerification?.backId ? (
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Back ID</label>
+                  <img 
+                    src={`data:${viewingIdUser.idVerification.backId.contentType};base64,${viewingIdUser.idVerification.backId.data}`}
+                    className="h-48 w-full object-contain border"
+                    alt="Back ID"
+                    loading="lazy"
+                  />
+                </div>
+              ) : (
+                <div className="flex-1 border p-4 flex items-center justify-center bg-gray-50">
+                  <p className="text-gray-500">No back ID image</p>
+                </div>
+              )}
+              
+              {viewingIdUser.idVerification?.selfie ? (
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Selfie</label>
+                  <img 
+                    src={`data:${viewingIdUser.idVerification.selfie.contentType};base64,${viewingIdUser.idVerification.selfie.data}`}
+                    className="h-48 w-full object-contain border"
+                    alt="Selfie"
+                    loading="lazy"
+                  />
+                </div>
+              ) : (
+                <div className="flex-1 border p-4 flex items-center justify-center bg-gray-50">
+                  <p className="text-gray-500">No selfie image</p>
+                </div>
+              )}
+            </div>
+
+            {/* Verification Status Change Section */}
+            <div className="mb-6 border-t pt-4">
+              <h4 className="text-md font-medium mb-2">Update Verification Status</h4>
+              
+              {viewingIdUser.idVerification?.status === 'rejected' && (
+                <div className="mb-3">
+                  <label className="block text-sm font-medium text-red-600 mb-1">Rejection Reason</label>
+                  <p className="text-sm text-gray-800">{viewingIdUser.idVerification.rejectionReason || 'No reason provided'}</p>
+                </div>
+              )}
+              
+              <div className="flex flex-col space-y-3">
+                {viewingIdUser.idVerification?.status === 'rejected' && (
+                  <button
+                    onClick={() => handleVerificationUpdate('pending')}
+                    disabled={isUpdatingVerification}
+                    className="px-4 py-2 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 disabled:opacity-50"
+                  >
+                    Reset to Pending
+                  </button>
+                )}
+
+                {(viewingIdUser.idVerification?.status === 'pending' || !viewingIdUser.idVerification?.status) && (
+                  <>
+                    <button
+                      onClick={() => handleVerificationUpdate('verified')}
+                      disabled={isUpdatingVerification}
+                      className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 disabled:opacity-50"
+                    >
+                      Approve Verification
+                    </button>
+                  </>
+                )}
+
+                {viewingIdUser.idVerification?.status === 'verified' && (
+                  <button
+                    onClick={() => handleVerificationUpdate('rejected')}
+                    disabled={isUpdatingVerification}
+                    className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 disabled:opacity-50"
+                  >
+                    Revoke Verification
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className="flex justify-end">
+              <button
+                onClick={() => {
+                  setViewingIdUser(null);                }}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                disabled={isUpdatingVerification}
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -174,7 +349,7 @@ function EditForm({ user, onClose, onSave }: { user: IUser; onClose: () => void;
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700">phone</label>
+          <label className="block text-sm font-medium text-gray-700">Phone</label>
           <input
             name="phone"
             value={formData.phone}

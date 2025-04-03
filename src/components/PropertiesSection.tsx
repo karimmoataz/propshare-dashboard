@@ -161,6 +161,7 @@ const handleDeleteProperty = async (propertyId: string) => {
                     src={`/api/properties/image/${property._id}`}
                     alt={property.name}
                     className="w-16 h-16 object-cover rounded"
+                    loading="lazy"
                   />
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">{property.name}</td>
@@ -292,6 +293,7 @@ function PropertyForm({
                 width={200}
                 height={200}
                 className="mt-2 w-32 h-32 object-cover rounded"
+                loading="lazy"
               />
             )}
             {initialData && !imagePreview && (
@@ -301,6 +303,7 @@ function PropertyForm({
                 width={200}
                 height={200}
                 className="mt-2 w-32 h-32 object-cover rounded"
+                loading="lazy"
               />
             )}
           </div>
