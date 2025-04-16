@@ -6,6 +6,9 @@ import UsersSection from '../../../components/UsersSection';
 import PropertiesSection from '../../../components/PropertiesSection';
 import VerificationSection from '../../../components/VerificationSection';
 
+// Set to force revalidation on every request
+export const revalidate = 0;
+
 export default async function AdminDashboard() {
   // Check if user is authenticated and is admin
   const session = await getServerSession(authOptions);
