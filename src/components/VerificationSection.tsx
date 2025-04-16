@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import type { IUser } from '../models/User';
 
+export const revalidate = 0;
+
 export default function VerificationSection() {
   const [users, setUsers] = useState<IUser[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -11,6 +13,7 @@ export default function VerificationSection() {
   const [selectedUser, setSelectedUser] = useState<IUser | null>(null);
   const [rejectionReason, setRejectionReason] = useState('');
 
+  
   useEffect(() => {
     const fetchPendingVerifications = async () => {
       try {
