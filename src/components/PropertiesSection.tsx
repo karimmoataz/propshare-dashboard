@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import type { IProperty } from '../models/Property';
 import Image from 'next/image';
 
+
 export default function PropertiesSection() {
   const [properties, setProperties] = useState<IProperty[]>([]);
   const [searchTerm, setSearchTerm] = useState('');

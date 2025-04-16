@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import type { IUser } from '../models/User';
 
+export const revalidate = 0;
+
 export default function UsersSection() {
   const [users, setUsers] = useState<IUser[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
