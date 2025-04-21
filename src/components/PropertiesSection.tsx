@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import type { IProperty } from '../models/Property';
 import Image from 'next/image';
 
+export const revalidate = 0;
 
 export default function PropertiesSection() {
   const [properties, setProperties] = useState<IProperty[]>([]);
