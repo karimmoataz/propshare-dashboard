@@ -4,6 +4,8 @@ import authOptions from '../../../api/auth/config';
 import Property from '../../../../models/Property';
 import dbConnect from '../../../../lib/db';
 
+export const revalidate = 0;
+
 export async function PUT(
   request: NextRequest,
   context: { params: { id: string } }

@@ -5,6 +5,8 @@ import authOptions from '../auth/config';
 import User from '../../../models/User';
 import dbConnect from '../../../lib/db';
 
+export const revalidate = 0;
+
 export async function GET() {
   const session = await getServerSession(authOptions);
   if (!session || session.user.role !== 'admin') {
