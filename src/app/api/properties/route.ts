@@ -5,6 +5,7 @@ import Property from '../../../models/Property';
 import dbConnect from '../../../lib/db';
 import { File } from 'buffer';
 
+export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export async function GET() {

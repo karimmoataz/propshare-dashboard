@@ -32,6 +32,7 @@ const PropertySchema = new Schema<IProperty>({
     image: { type: Buffer, required: true },
     contentType: { type: String, required: true },
     currentPrice: { type: Number, required: true },
+    currentPriceDate: { type: Date, default: Date.now },
     previousPrices: [{
         price: { type: Number, required: true },
         date: { type: Date, required: true }

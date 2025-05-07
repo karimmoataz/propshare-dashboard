@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import type { IProperty } from '../models/Property';
 import Image from 'next/image';
 
+export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export default function PropertiesSection() {
@@ -15,31 +16,32 @@ export default function PropertiesSection() {
   const [error, setError] = useState('');
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
-  const fetchProperties = async () => {
-    try {
-      const response = await fetch('/api/properties', {
-        // Add cache: 'no-store' to prevent caching
-        cache: 'no-store',
-      });
-      if (!response.ok) throw new Error('Failed to fetch properties');
-      const data = await response.json();
-      setProperties(data);
-      setIsLoading(false);
-    } catch (err) {
-      setError('Error fetching properties');
-      setIsLoading(false);
-    }
-  };
-
   useEffect(() => {
+    const fetchProperties = async () => {
+      try {
+        // Add timestamp to prevent caching
+        const timestamp = new Date().getTime();
+        const response = await fetch(`/api/properties?t=${timestamp}`, {
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0',
+          },
+        });
+        
+        if (!response.ok) throw new Error('Failed to fetch properties');
+        const data = await response.json();
+        setProperties(data);
+        setIsLoading(false);
+      } catch (err) {
+        console.error('Error fetching properties:', err);
+        setError('Error fetching properties');
+        setIsLoading(false);
+      }
+    };
+    
     fetchProperties();
-
-    // Set up polling for updates every 30 seconds
-    const intervalId = setInterval(() => {
-      fetchProperties();
-    }, 30000);
-
-    return () => clearInterval(intervalId);
   }, []);
 
   const filteredProperties = properties.filter(property =>
@@ -49,20 +51,27 @@ export default function PropertiesSection() {
     try {
       const response = await fetch('/api/properties', {
         method: 'POST',
-        body: formData
+        body: formData,
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+        },
       });
       
       if (!response.ok) throw new Error('Failed to add property');
       
-      // Refresh all properties after adding
-      await fetchProperties();
+      const newProperty = await response.json();
+      setProperties([...properties, newProperty]);
       setShowAddModal(false);
       setImagePreview(null);
+      
+      // Force a page refresh to ensure we get fresh data
+      window.location.reload();
     } catch (err) {
       setError('Error adding property');
     }
   };
-
+  
   const handleDeleteProperty = async (propertyId: string) => {
     if (!propertyId) return;
     
@@ -76,7 +85,9 @@ export default function PropertiesSection() {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
         },
+        cache: 'no-store',
       });
       
       if (!response.ok) {
@@ -84,9 +95,11 @@ export default function PropertiesSection() {
         throw new Error(errorData.error || 'Failed to delete property');
       }
       
-      // Refresh all properties after deletion
-      await fetchProperties();
+      setProperties(properties.filter(prop => prop._id !== propertyId));
       alert('Property deleted successfully');
+      
+      // Force a page refresh to ensure we get fresh data
+      window.location.reload();
     } catch (error) {
       console.error('Error deleting property:', error);
       if (error instanceof Error) {
@@ -103,15 +116,22 @@ export default function PropertiesSection() {
     try {
       const response = await fetch(`/api/properties/${editingProperty._id}`, {
         method: 'PUT',
-        body: formData
+        body: formData,
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+        },
       });
       
       if (!response.ok) throw new Error('Failed to update property');
       
-      // Refresh all properties after updating
-      await fetchProperties();
+      const data = await response.json();
+      setProperties(properties.map(p => p._id === data._id ? data : p));
       setEditingProperty(null);
       setImagePreview(null);
+      
+      // Force a page refresh to ensure we get fresh data
+      window.location.reload();
     } catch (err) {
       setError('Error updating property');
     }
@@ -126,11 +146,6 @@ export default function PropertiesSection() {
       };
       reader.readAsDataURL(file);
     }
-  };
-
-  const handleRefresh = () => {
-    setIsLoading(true);
-    fetchProperties();
   };
 
   if (isLoading) return <div className="p-4">Loading properties...</div>;
@@ -148,7 +163,7 @@ export default function PropertiesSection() {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
           <button
-            onClick={handleRefresh}
+            onClick={() => window.location.reload()}
             className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
             title="Refresh data"
           >
@@ -185,7 +200,7 @@ export default function PropertiesSection() {
                   <Image
                     width={64}
                     height={64}
-                    src={`/api/properties/image/${property._id}?cache=${Date.now()}`}
+                    src={`/api/properties/image/${property._id}?t=${new Date().getTime()}`}
                     alt={property.name}
                     className="w-16 h-16 object-cover rounded"
                     loading="lazy"
@@ -325,7 +340,7 @@ function PropertyForm({
             )}
             {initialData && !imagePreview && (
               <Image 
-                src={`/api/properties/image/${initialData._id}?cache=${Date.now()}`} 
+                src={`/api/properties/image/${initialData._id}?t=${new Date().getTime()}`} 
                 alt="Current" 
                 width={200}
                 height={200}
