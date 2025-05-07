@@ -48,7 +48,7 @@ const PropertySchema = new Schema<IProperty>({
     shares: [{
         userId: { 
             type: Schema.Types.ObjectId,
-            ref: 'users',
+            ref: 'User',
             required: true 
         },
         shares: { 

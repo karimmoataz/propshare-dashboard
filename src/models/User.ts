@@ -63,7 +63,7 @@ const UserSchema = new Schema<IUser>(
     resetPasswordExpires: Date,
     ownedShares: [
       {
-        propertyId: { type: Schema.Types.ObjectId, ref: 'properties' },
+        propertyId: { type: Schema.Types.ObjectId, ref: 'Property' },
         shares: { type: Number, default: 0 }
       }
     ],
