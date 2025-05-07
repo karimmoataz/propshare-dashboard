@@ -15,20 +15,29 @@ export default function PropertiesSection() {
   const [error, setError] = useState('');
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
+  const fetchProperties = async () => {
+    try {
+      const response = await fetch('/api/properties', {
+        // Add cache: 'no-store' to prevent caching
+        cache: 'no-store',
+      });
+      if (!response.ok) throw new Error('Failed to fetch properties');
+      const data = await response.json();
+      setProperties(data);
+      setIsLoading(false);
+    } catch (err) {
+      setError('Error fetching properties');
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchProperties = async () => {
-      try {
-        const response = await fetch('/api/properties');
-        if (!response.ok) throw new Error('Failed to fetch properties');
-        const data = await response.json();
-        setProperties(data);
-        setIsLoading(false);
-      } catch (err) {
-        setError('Error fetching properties');
-        setIsLoading(false);
-      }
-    };
     fetchProperties();
+    const intervalId = setInterval(() => {
+      fetchProperties();
+    }, 60000);
+
+    return () => clearInterval(intervalId);
   }, []);
 
   const filteredProperties = properties.filter(property =>

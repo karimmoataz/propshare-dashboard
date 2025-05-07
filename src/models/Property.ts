@@ -6,7 +6,13 @@ export interface IProperty extends Document {
     image: Buffer;
     contentType: string;
     currentPrice: number;
-    previousPrices: number[];
+    currentPriceDate: Date;
+    previousPrices: [
+        {
+            price: number;
+            date: Date;
+        }
+    ];
     location: string;
     area: number;
     floors: number;
@@ -26,7 +32,10 @@ const PropertySchema = new Schema<IProperty>({
     image: { type: Buffer, required: true },
     contentType: { type: String, required: true },
     currentPrice: { type: Number, required: true },
-    previousPrices: { type: [Number], default: [] },
+    previousPrices: [{
+        price: { type: Number, required: true },
+        date: { type: Date, required: true }
+    }],
     location: { type: String, required: true },
     area: { type: Number, required: true },
     floors: { type: Number, required: true },
@@ -38,7 +47,7 @@ const PropertySchema = new Schema<IProperty>({
     shares: [{
         userId: { 
             type: Schema.Types.ObjectId,
-            ref: 'User',
+            ref: 'users',
             required: true 
         },
         shares: { 

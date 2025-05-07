@@ -26,6 +26,7 @@ export async function PUT(
     interface UpdateData {
       name: FormDataEntryValue | null;
       currentPrice: number;
+      currentPriceDate: Date; // Add timestamp for current price
       sharePrice: number;
       location: FormDataEntryValue | null;
       area: number;
@@ -38,6 +39,7 @@ export async function PUT(
     const updateData: UpdateData = {
       name: formData.get('name'),
       currentPrice: Number(formData.get('currentPrice')),
+      currentPriceDate: new Date(), // Set current timestamp
       sharePrice: 0, // Will be calculated below
       location: formData.get('location'),
       area: Number(formData.get('area')),
@@ -64,12 +66,17 @@ export async function PUT(
     updateData.sharePrice = newPrice / currentProperty.numberOfShares;
     
     if (newPrice !== currentProperty.currentPrice) {
-      // Update operation that pushes the old price to previousPrices array
+      // Update operation that pushes the old price with its timestamp to previousPrices array
       const updatedProperty = await Property.findByIdAndUpdate(
         id,
         {
           ...updateData,
-          $push: { previousPrices: currentProperty.currentPrice }
+          $push: { 
+            previousPrices: { 
+              price: currentProperty.currentPrice,
+              date: currentProperty.currentPriceDate || new Date() // Use existing timestamp or fallback
+            } 
+          }
         },
         { new: true }
       );

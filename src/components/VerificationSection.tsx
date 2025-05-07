@@ -13,21 +13,26 @@ export default function VerificationSection() {
   const [selectedUser, setSelectedUser] = useState<IUser | null>(null);
   const [rejectionReason, setRejectionReason] = useState('');
 
+  const fetchPendingVerifications = async () => {
+    try {
+      const response = await fetch('/api/verifications');
+      if (!response.ok) throw new Error('Failed to fetch verifications');
+      const data = await response.json();
+      setUsers(data);
+      setIsLoading(false);
+    } catch (err) {
+      setError('Error fetching verifications');
+      setIsLoading(false);
+    }
+  };
   
   useEffect(() => {
-    const fetchPendingVerifications = async () => {
-      try {
-        const response = await fetch('/api/verifications');
-        if (!response.ok) throw new Error('Failed to fetch verifications');
-        const data = await response.json();
-        setUsers(data);
-        setIsLoading(false);
-      } catch (err) {
-        setError('Error fetching verifications');
-        setIsLoading(false);
-      }
-    };
     fetchPendingVerifications();
+    const intervalId = setInterval(() => {
+      fetchPendingVerifications();
+    }, 30000);
+
+    return () => clearInterval(intervalId);
   }, []);
 
   const filteredUsers = users.filter(user => 

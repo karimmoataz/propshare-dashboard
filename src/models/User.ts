@@ -16,6 +16,10 @@ export interface IUser extends Document {
   verificationToken?: string;
   resetPasswordToken?: string;
   resetPasswordExpires?: Date;
+  ownedShares: Array<{
+    propertyId: mongoose.Types.ObjectId;
+    shares: number;
+  }>;
   oldPasswords: string[];
   comparePassword(candidatePassword: string): Promise<boolean>;
   idVerification?: {
@@ -57,6 +61,12 @@ const UserSchema = new Schema<IUser>(
     verificationToken: String,
     resetPasswordToken: String,
     resetPasswordExpires: Date,
+    ownedShares: [
+      {
+        propertyId: { type: Schema.Types.ObjectId, ref: 'properties' },
+        shares: { type: Number, default: 0 }
+      }
+    ],
     oldPasswords: [String],
     idVerification: {
       nationalId: { type: String },
