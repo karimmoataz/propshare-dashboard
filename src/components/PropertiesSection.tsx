@@ -33,9 +33,11 @@ export default function PropertiesSection() {
 
   useEffect(() => {
     fetchProperties();
+
+    // Set up polling for updates every 30 seconds
     const intervalId = setInterval(() => {
       fetchProperties();
-    }, 60000);
+    }, 30000);
 
     return () => clearInterval(intervalId);
   }, []);
@@ -52,50 +54,48 @@ export default function PropertiesSection() {
       
       if (!response.ok) throw new Error('Failed to add property');
       
-      const newProperty = await response.json();
-      setProperties([...properties, newProperty]);
+      // Refresh all properties after adding
+      await fetchProperties();
       setShowAddModal(false);
       setImagePreview(null);
     } catch (err) {
       setError('Error adding property');
     }
   };
-  // Function to handle property deletion
-const handleDeleteProperty = async (propertyId: string) => {
-  if (!propertyId) return;
-  
-  // Show confirmation dialog
-  const confirmDelete = window.confirm("Are you sure you want to delete this property? This action cannot be undone.");
-  
-  if (!confirmDelete) return;
-  
-  try {
-    const response = await fetch(`/api/properties/${propertyId}`, {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-    
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Failed to delete property');
-    }
-    
-    setProperties(properties.filter(prop => prop._id !== propertyId));
-    
-    alert('Property deleted successfully');
 
+  const handleDeleteProperty = async (propertyId: string) => {
+    if (!propertyId) return;
     
-  } catch (error) {
-    console.error('Error deleting property:', error);
-    if (error instanceof Error) {
-      alert(`Error: ${error.message}`);
-    } else {
-      alert('An unknown error occurred');
+    // Show confirmation dialog
+    const confirmDelete = window.confirm("Are you sure you want to delete this property? This action cannot be undone.");
+    
+    if (!confirmDelete) return;
+    
+    try {
+      const response = await fetch(`/api/properties/${propertyId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete property');
+      }
+      
+      // Refresh all properties after deletion
+      await fetchProperties();
+      alert('Property deleted successfully');
+    } catch (error) {
+      console.error('Error deleting property:', error);
+      if (error instanceof Error) {
+        alert(`Error: ${error.message}`);
+      } else {
+        alert('An unknown error occurred');
+      }
     }
-  }
-};
+  };
 
   const handleUpdateProperty = async (formData: FormData) => {
     if (!editingProperty) return;
@@ -108,8 +108,8 @@ const handleDeleteProperty = async (propertyId: string) => {
       
       if (!response.ok) throw new Error('Failed to update property');
       
-      const data = await response.json();
-      setProperties(properties.map(p => p._id === data._id ? data : p));
+      // Refresh all properties after updating
+      await fetchProperties();
       setEditingProperty(null);
       setImagePreview(null);
     } catch (err) {
@@ -128,19 +128,35 @@ const handleDeleteProperty = async (propertyId: string) => {
     }
   };
 
+  const handleRefresh = () => {
+    setIsLoading(true);
+    fetchProperties();
+  };
+
   if (isLoading) return <div className="p-4">Loading properties...</div>;
   if (error) return <div className="p-4 text-red-500">{error}</div>;
 
   return (
     <div className="mt-8">
       <div className="flex justify-between mb-4">
-        <input
-          type="text"
-          placeholder="Search properties..."
-          className="border p-2 w-1/2 rounded-lg"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
+        <div className="flex gap-2 w-1/2">
+          <input
+            type="text"
+            placeholder="Search properties..."
+            className="border p-2 w-full rounded-lg"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          <button
+            onClick={handleRefresh}
+            className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
+            title="Refresh data"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+          </button>
+        </div>
         <button
           onClick={() => setShowAddModal(true)}
           className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
@@ -169,7 +185,7 @@ const handleDeleteProperty = async (propertyId: string) => {
                   <Image
                     width={64}
                     height={64}
-                    src={`/api/properties/image/${property._id}`}
+                    src={`/api/properties/image/${property._id}?cache=${Date.now()}`}
                     alt={property.name}
                     className="w-16 h-16 object-cover rounded"
                     loading="lazy"
@@ -309,7 +325,7 @@ function PropertyForm({
             )}
             {initialData && !imagePreview && (
               <Image 
-                src={`/api/properties/image/${initialData._id}`} 
+                src={`/api/properties/image/${initialData._id}?cache=${Date.now()}`} 
                 alt="Current" 
                 width={200}
                 height={200}
