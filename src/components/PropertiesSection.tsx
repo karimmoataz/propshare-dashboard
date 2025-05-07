@@ -16,32 +16,37 @@ export default function PropertiesSection() {
   const [error, setError] = useState('');
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
+  const fetchProperties = async () => {
+    try {
+      // Add timestamp to prevent caching
+      const timestamp = new Date().getTime();
+      const response = await fetch(`/api/properties?t=${timestamp}`, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0',
+        },
+      });
+      
+      if (!response.ok) throw new Error('Failed to fetch properties');
+      const data = await response.json();
+      setProperties(data);
+      setIsLoading(false);
+    } catch (err) {
+      console.error('Error fetching properties:', err);
+      setError('Error fetching properties');
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchProperties = async () => {
-      try {
-        // Add timestamp to prevent caching
-        const timestamp = new Date().getTime();
-        const response = await fetch(`/api/properties?t=${timestamp}`, {
-          cache: 'no-store',
-          headers: {
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Pragma': 'no-cache',
-            'Expires': '0',
-          },
-        });
-        
-        if (!response.ok) throw new Error('Failed to fetch properties');
-        const data = await response.json();
-        setProperties(data);
-        setIsLoading(false);
-      } catch (err) {
-        console.error('Error fetching properties:', err);
-        setError('Error fetching properties');
-        setIsLoading(false);
-      }
-    };
-    
     fetchProperties();
+
+    const intervalId = setInterval(() => {
+      fetchProperties();
+    }, 30000);
+    return () => clearInterval(intervalId);
   }, []);
 
   const filteredProperties = properties.filter(property =>
