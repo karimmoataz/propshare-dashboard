@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-import authOptions from '../../../api/auth/config';
+import authOptions from '../../auth/config';
 import Property from '../../../../models/Property';
 import dbConnect from '../../../../lib/db';
+import { uploadToCloudinary, deleteFromCloudinary } from '../../../../lib/cloudinary';
 
 export const revalidate = 0;
 export const dynamic = 'force-dynamic';
@@ -25,53 +26,99 @@ export async function PUT(
     const formData = await request.formData();
     
     interface UpdateData {
-      name: FormDataEntryValue | null;
+      name: string;
       currentPrice: number;
-      currentPriceDate: Date; // Add timestamp for current price
+      currentPriceDate: Date;
       sharePrice: number;
-      location: FormDataEntryValue | null;
+      location: string;
       area: number;
       floors: number;
       rooms: number;
-      image?: Buffer;
-      contentType?: string;
     }
     
-    const updateData: UpdateData = {
-      name: formData.get('name'),
-      currentPrice: Number(formData.get('currentPrice')),
-      currentPriceDate: new Date(), // Set current timestamp
-      sharePrice: 0, // Will be calculated below
-      location: formData.get('location'),
-      area: Number(formData.get('area')),
-      floors: Number(formData.get('floors')),
-      rooms: Number(formData.get('rooms'))
-    };
-    
-    const imageFile = formData.get('image') as File | null;
-    if (imageFile && imageFile.size > 0) {
-      updateData.image = Buffer.from(await imageFile.arrayBuffer());
-      updateData.contentType = imageFile.type;
-    }
-    
+    // Get current property first
     await dbConnect();
-    
-    // First, get the current property to check if price is changing
     const currentProperty = await Property.findById(id);
     if (!currentProperty) {
       return NextResponse.json({ error: 'Property not found' }, { status: 404 });
     }
+
+    const updateData: UpdateData = {
+      name: formData.get('name')?.toString() || currentProperty.name,
+      currentPrice: Number(formData.get('currentPrice')) || currentProperty.currentPrice,
+      currentPriceDate: new Date(),
+      sharePrice: 0, // Will be calculated below
+      location: formData.get('location')?.toString() || currentProperty.location,
+      area: Number(formData.get('area')) || currentProperty.area,
+      floors: Number(formData.get('floors')) || currentProperty.floors,
+      rooms: Number(formData.get('rooms')) || currentProperty.rooms,
+    };
+    
+    // Handle image updates (if any)
+    const shouldReplaceImages = formData.get('replaceImages') === 'true';
+    let images = [...currentProperty.images]; // Start with current images
+    
+    if (shouldReplaceImages) {
+      // Delete all existing images from Cloudinary
+      for (const image of currentProperty.images) {
+        try {
+          await deleteFromCloudinary(image.publicId);
+        } catch (error) {
+          console.error('Error deleting image:', error);
+          // Continue even if some deletions fail
+        }
+      }
+      images = []; // Clear existing images
+    }
+    
+    // Process new images (if any)
+    const imageFiles = formData.getAll('images') as File[];
+    if (imageFiles && imageFiles.length > 0 && imageFiles[0].size > 0) {
+      for (const imageFile of imageFiles) {
+        if (imageFile.type.startsWith('image/')) {
+          const imageBuffer = Buffer.from(await imageFile.arrayBuffer());
+          const uploadedUrl = await uploadToCloudinary(imageBuffer, imageFile.type);
+          
+          // Extract public ID from the URL
+          const publicId = uploadedUrl.split('/').slice(-1)[0].split('.')[0];
+          const fullPublicId = `properties/${publicId}`;
+          
+          images.push({
+            url: uploadedUrl,
+            publicId: fullPublicId
+          });
+        }
+      }
+    }
+    
+    // Remove specific images if requested
+    const imagesToRemove = formData.getAll('removeImages') as string[];
+    if (imagesToRemove && imagesToRemove.length > 0) {
+      for (const imagePublicId of imagesToRemove) {
+        try {
+          await deleteFromCloudinary(imagePublicId);
+          images = images.filter(img => img.publicId !== imagePublicId);
+        } catch (error) {
+          console.error(`Error removing image ${imagePublicId}:`, error);
+        }
+      }
+    }
     
     // Calculate share price using the formula: currentPrice / numberOfShares
-    const newPrice = updateData.currentPrice;
-    updateData.sharePrice = newPrice / currentProperty.numberOfShares;
+    updateData.sharePrice = updateData.currentPrice / currentProperty.numberOfShares;
     
-    if (newPrice !== currentProperty.currentPrice) {
+    // Check if price changed
+    const priceChanged = updateData.currentPrice !== currentProperty.currentPrice;
+    
+    let updatedProperty;
+    
+    if (priceChanged) {
       // Update operation that pushes the old price with its timestamp to previousPrices array
-      const updatedProperty = await Property.findByIdAndUpdate(
+      updatedProperty = await Property.findByIdAndUpdate(
         id,
         {
           ...updateData,
+          images: images,
           $push: { 
             previousPrices: { 
               price: currentProperty.currentPrice,
@@ -81,18 +128,19 @@ export async function PUT(
         },
         { new: true }
       );
-      
-      return NextResponse.json(updatedProperty);
     } else {
-      // No price change, but we still update the share price in case numberOfShares has changed
-      const updatedProperty = await Property.findByIdAndUpdate(
+      // No price change
+      updatedProperty = await Property.findByIdAndUpdate(
         id,
-        updateData,
+        {
+          ...updateData,
+          images: images
+        },
         { new: true }
       );
-      
-      return NextResponse.json(updatedProperty);
     }
+    
+    return NextResponse.json(updatedProperty);
     
   } catch (error) {
     console.error('Update error:', error);
@@ -101,17 +149,6 @@ export async function PUT(
       { status: 500 }
     );
   }
-}
-
-// Add OPTIONS handler for CORS
-export async function OPTIONS() {
-  return new NextResponse(null, {
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'PUT, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    },
-  });
 }
 
 export async function DELETE(
@@ -131,12 +168,27 @@ export async function DELETE(
   try {
     await dbConnect();
     
-    // Find and delete the property
-    const deletedProperty = await Property.findByIdAndDelete(id);
+    // Find the property first to get image references
+    const property = await Property.findById(id);
     
-    if (!deletedProperty) {
+    if (!property) {
       return NextResponse.json({ error: 'Property not found' }, { status: 404 });
     }
+    
+    // Delete all associated images from Cloudinary
+    if (property.images && property.images.length > 0) {
+      for (const image of property.images) {
+        try {
+          await deleteFromCloudinary(image.publicId);
+        } catch (error) {
+          console.error(`Error deleting image ${image.publicId}:`, error);
+          // Continue deletion process even if some image deletions fail
+        }
+      }
+    }
+    
+    // Now delete the property from database
+    await Property.findByIdAndDelete(id);
     
     return NextResponse.json({ message: 'Property deleted successfully' });
     
@@ -147,4 +199,15 @@ export async function DELETE(
       { status: 500 }
     );
   }
+}
+
+// Add OPTIONS handler for CORS
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'PUT, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    },
+  });
 }

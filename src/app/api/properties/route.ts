@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import authOptions from '../auth/config';
 import Property from '../../../models/Property';
 import dbConnect from '../../../lib/db';
-import { File } from 'buffer';
+import { uploadToCloudinary } from '../../../lib/cloudinary';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -17,7 +17,7 @@ export async function GET() {
     try {
         await dbConnect();
         const properties = await Property.find({})
-            .select('-image -__v')
+            .select('-__v')
             .lean();
         return NextResponse.json(properties);
     } catch (error) {
@@ -39,13 +39,37 @@ export async function POST(req: Request) {
         await dbConnect();
         const formData = await req.formData();
 
-        // Validate image
-        const imageFile = formData.get('image') as File;
-        if (!imageFile || !imageFile.type.startsWith('image/')) {
+        // Process image files (multiple)
+        const imageUrls = [];
+        const imageFiles = formData.getAll('images') as File[];
+        
+        if (!imageFiles || imageFiles.length === 0 || !imageFiles[0].size) {
             return NextResponse.json(
-                { error: 'Valid image file required' },
+                { error: 'At least one image file is required' },
                 { status: 400 }
             );
+        }
+
+        // Upload each image to Cloudinary
+        for (const imageFile of imageFiles) {
+            if (!imageFile.type.startsWith('image/')) {
+                return NextResponse.json(
+                    { error: 'All files must be valid images' },
+                    { status: 400 }
+                );
+            }
+            
+            const imageBuffer = Buffer.from(await imageFile.arrayBuffer());
+            const uploadedUrl = await uploadToCloudinary(imageBuffer, imageFile.type);
+            
+            // Extract public ID from the URL
+            const publicId = uploadedUrl.split('/').slice(-1)[0].split('.')[0];
+            const fullPublicId = `properties/${publicId}`;
+            
+            imageUrls.push({
+                url: uploadedUrl,
+                publicId: fullPublicId
+            });
         }
 
         // Parse numeric fields
@@ -82,13 +106,12 @@ export async function POST(req: Request) {
 
         // Calculate derived values
         const sharePrice = fieldValues.currentPrice / fieldValues.numberOfShares;
-        const imageBuffer = Buffer.from(await imageFile.arrayBuffer());
 
         const propertyData = {
             name: formData.get('name')!.toString(),
-            image: imageBuffer,
-            contentType: imageFile.type,
+            images: imageUrls,
             currentPrice: fieldValues.currentPrice,
+            currentPriceDate: new Date(),
             previousPrices: [],
             location: formData.get('location')!.toString(),
             area: fieldValues.area,
@@ -98,14 +121,13 @@ export async function POST(req: Request) {
             sharePrice: Number(sharePrice.toFixed(2)),
             availableShares: fieldValues.numberOfShares,
             balance: 0,
-            shares: []
+            shares: [],
+            contentType: imageFiles[0].type, // Add contentType field at the property level
+            image: imageUrls.length > 0 ? imageUrls[0].url : '' // Add image field at the property level
         };
 
         const newProperty = await Property.create(propertyData);
-        const responseData = newProperty.toObject();
-        delete responseData.image;
-
-        return NextResponse.json(responseData, { status: 201 });
+        return NextResponse.json(newProperty, { status: 201 });
 
     } catch (error) {
         console.error('Creation error:', error);

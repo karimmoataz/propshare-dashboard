@@ -3,7 +3,7 @@ import mongoose, { Document, Schema } from 'mongoose';
 export interface IProperty extends Document {
     _id: string;
     name: string;
-    image: Buffer;
+    images: { url: string; publicId: string }[];
     contentType: string;
     currentPrice: number;
     currentPriceDate: Date;
@@ -29,7 +29,16 @@ export interface IProperty extends Document {
 
 const PropertySchema = new Schema<IProperty>({
     name: { type: String, required: true },
-    image: { type: Buffer, required: true },
+    images: [{
+    url: {
+      type: String,
+      required: true
+    },
+    publicId: {
+      type: String,
+      required: true
+    }
+  }],
     contentType: { type: String, required: true },
     currentPrice: { type: Number, required: true },
     currentPriceDate: { type: Date, default: Date.now },

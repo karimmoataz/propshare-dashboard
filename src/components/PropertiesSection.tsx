@@ -7,14 +7,22 @@ import Image from 'next/image';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
+// Updated interface to include images array
+interface IPropertyWithImages extends IProperty {
+  images: { url: string; publicId: string }[];
+}
+
 export default function PropertiesSection() {
-  const [properties, setProperties] = useState<IProperty[]>([]);
+  const [properties, setProperties] = useState<IPropertyWithImages[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [editingProperty, setEditingProperty] = useState<IProperty | null>(null);
+  const [editingProperty, setEditingProperty] = useState<IPropertyWithImages | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [replaceImages, setReplaceImages] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   const fetchProperties = async () => {
     try {
@@ -49,6 +57,14 @@ export default function PropertiesSection() {
 
   const handleAddProperty = async (formData: FormData) => {
     try {
+      // Remove any existing images field (we'll append multiple files)
+      formData.delete('images');
+      
+      // Append each image file individually
+      for (const file of imageFiles) {
+        formData.append('images', file);
+      }
+      
       const response = await fetch('/api/properties', {
         method: 'POST',
         body: formData,
@@ -58,17 +74,26 @@ export default function PropertiesSection() {
         },
       });
       
-      if (!response.ok) throw new Error('Failed to add property');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to add property');
+      }
       
       const newProperty = await response.json();
       setProperties([...properties, newProperty]);
       setShowAddModal(false);
-      setImagePreview(null);
+      setImageFiles([]);
+      setImagePreviews([]);
       
       // Force a page refresh to ensure we get fresh data
       window.location.reload();
     } catch (err) {
-      setError('Error adding property');
+      console.error('Error adding property:', err);
+      if (err instanceof Error) {
+        alert(`Error: ${err.message}`);
+      } else {
+        setError('Error adding property');
+      }
     }
   };
   
@@ -114,6 +139,17 @@ export default function PropertiesSection() {
     if (!editingProperty) return;
 
     try {
+      // Add replace images flag
+      formData.append('replaceImages', replaceImages.toString());
+      
+      // Remove any existing images field (we'll append multiple files)
+      formData.delete('images');
+      
+      // Append each image file individually
+      for (const file of imageFiles) {
+        formData.append('images', file);
+      }
+      
       const response = await fetch(`/api/properties/${editingProperty._id}`, {
         method: 'PUT',
         body: formData,
@@ -123,28 +159,62 @@ export default function PropertiesSection() {
         },
       });
       
-      if (!response.ok) throw new Error('Failed to update property');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update property');
+      }
       
       const data = await response.json();
       setProperties(properties.map(p => p._id === data._id ? data : p));
       setEditingProperty(null);
-      setImagePreview(null);
+      setImageFiles([]);
+      setImagePreviews([]);
+      setReplaceImages(false);
       
       // Force a page refresh to ensure we get fresh data
       window.location.reload();
     } catch (err) {
-      setError('Error updating property');
+      console.error('Error updating property:', err);
+      if (err instanceof Error) {
+        alert(`Error: ${err.message}`);
+      } else {
+        setError('Error updating property');
+      }
     }
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
+  const handleImagesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    
+    // Store the files
+    const newFiles = Array.from(files);
+    setImageFiles(prevFiles => [...prevFiles, ...newFiles]);
+    
+    // Create previews for each file
+    for (const file of newFiles) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setImagePreview(reader.result as string);
+        setImagePreviews(prev => [...prev, reader.result as string]);
       };
       reader.readAsDataURL(file);
+    }
+  };
+  
+  const handleRemovePreview = (index: number) => {
+    setImageFiles(prev => prev.filter((_, i) => i !== index));
+    setImagePreviews(prev => prev.filter((_, i) => i !== index));
+  };
+  
+  const nextImage = (property: IPropertyWithImages) => {
+    if (property.images && property.images.length > 1) {
+      setCurrentImageIndex((prev) => (prev + 1) % property.images.length);
+    }
+  };
+
+  const prevImage = (property: IPropertyWithImages) => {
+    if (property.images && property.images.length > 1) {
+      setCurrentImageIndex((prev) => (prev - 1 + property.images.length) % property.images.length);
     }
   };
 
@@ -197,14 +267,29 @@ export default function PropertiesSection() {
             {filteredProperties.map((property) => (
               <tr key={property._id}>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <Image
-                    width={64}
-                    height={64}
-                    src={`/api/properties/image/${property._id}?t=${new Date().getTime()}`}
-                    alt={property.name}
-                    className="w-16 h-16 object-cover rounded"
-                    loading="lazy"
-                  />
+                  {property.images && property.images.length > 0 ? (
+                    <div className="relative">
+                      <Image
+                        width={64}
+                        height={64}
+                        src={property.images[currentImageIndex]?.url || '/placeholder.jpg'}
+                        alt={property.name}
+                        className="w-16 h-16 object-cover rounded"
+                        loading="lazy"
+                      />
+                      {property.images.length > 1 && (
+                        <div className="absolute -bottom-2 left-0 right-0 flex justify-center space-x-1">
+                          <span className="text-xs bg-black bg-opacity-60 text-white px-1 rounded">
+                            {currentImageIndex + 1}/{property.images.length}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="w-16 h-16 bg-gray-200 flex items-center justify-center rounded">
+                      <span className="text-gray-400 text-xs">No image</span>
+                    </div>
+                  )}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">{property.name}</td>
                 <td className="px-6 py-4 whitespace-nowrap">
@@ -239,34 +324,44 @@ export default function PropertiesSection() {
         </table>
       </div>
       {showAddModal && (
-        <div className="fixed inset-0 bg-black/30 bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white p-6 rounded-lg w-full max-w-2xl">
+        <div className="fixed inset-0 bg-black/30 bg-opacity-50 flex items-center justify-center z-40">
+          <div className="bg-white p-6 rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <h3 className="text-lg font-medium mb-4">Add New Property</h3>
             <PropertyForm
               onSubmit={handleAddProperty}
               onClose={() => {
                 setShowAddModal(false);
-                setImagePreview(null);
+                setImageFiles([]);
+                setImagePreviews([]);
               }}
-              imagePreview={imagePreview}
-              onImageChange={handleImageChange}
+              imagePreviews={imagePreviews}
+              onImagesChange={handleImagesChange}
+              onRemovePreview={handleRemovePreview}
+              replaceImages={replaceImages}
+              setReplaceImages={setReplaceImages}
             />
           </div>
         </div>
       )}
       {editingProperty && (
-        <div className="fixed inset-0 bg-black/30 bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white p-6 rounded-lg w-full max-w-2xl">
+        <div className="fixed inset-0 bg-black/30 bg-opacity-50 flex items-center justify-center z-40">
+          <div className="bg-white p-6 rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <h3 className="text-lg font-medium mb-4">Edit Property</h3>
             <PropertyForm
               onSubmit={handleUpdateProperty}
               onClose={() => {
                 setEditingProperty(null);
-                setImagePreview(null);
+                setImageFiles([]);
+                setImagePreviews([]);
+                setReplaceImages(false);
               }}
               initialData={editingProperty}
-              imagePreview={imagePreview}
-              onImageChange={handleImageChange}
+              imagePreviews={imagePreviews}
+              onImagesChange={handleImagesChange}
+              onRemovePreview={handleRemovePreview}
+              existingImages={editingProperty.images}
+              replaceImages={replaceImages}
+              setReplaceImages={setReplaceImages}
             />
           </div>
         </div>
@@ -275,23 +370,34 @@ export default function PropertiesSection() {
   );
 }
 
+interface PropertyFormProps {
+  onSubmit: (formData: FormData) => void;
+  onClose: () => void;
+  initialData?: IPropertyWithImages;
+  imagePreviews: string[];
+  onImagesChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onRemovePreview: (index: number) => void;
+  existingImages?: { url: string; publicId: string }[];
+  replaceImages: boolean;
+  setReplaceImages: (value: boolean) => void;
+}
+
 function PropertyForm({ 
   onSubmit,
   onClose,
   initialData,
-  imagePreview,
-  onImageChange
-}: { 
-  onSubmit: (formData: FormData) => void;
-  onClose: () => void;
-  initialData?: IProperty;
-  imagePreview?: string | null;
-  onImageChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-}) {
+  imagePreviews,
+  onImagesChange,
+  onRemovePreview,
+  existingImages = [],
+  replaceImages,
+  setReplaceImages
+}: PropertyFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [sharePrice, setSharePrice] = useState(
     initialData?.sharePrice || 0
   );
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   const calculateSharePrice = (currentPrice: string, shares: string) => {
     const price = parseFloat(currentPrice);
@@ -314,44 +420,22 @@ function PropertyForm({
     setIsSubmitting(false);
   };
 
+  const nextImage = () => {
+    if (existingImages && existingImages.length > 1) {
+      setCurrentImageIndex((prev) => (prev + 1) % existingImages.length);
+    }
+  };
+
+  const prevImage = () => {
+    if (existingImages && existingImages.length > 1) {
+      setCurrentImageIndex((prev) => (prev - 1 + existingImages.length) % existingImages.length);
+    }
+  };
+
   return (
     <form onSubmit={handleSubmit}>
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-4">
-          <div>
-          <label className="block text-sm font-medium text-gray-700">Image</label>
-            <input
-              type="file"
-              name="image"
-              onChange={onImageChange}
-              accept="image/*"
-              className="mt-1 block w-full"
-              required={!initialData}
-            />
-            {imagePreview && (
-              <Image 
-                src={imagePreview} 
-                alt="Preview"
-                width={200}
-                height={200}
-                className="mt-2 w-32 h-32 object-cover rounded"
-                loading="lazy"
-              />
-            )}
-            {initialData && !imagePreview && (
-              <Image 
-                src={`/api/properties/image/${initialData._id}?t=${new Date().getTime()}`} 
-                alt="Current" 
-                width={200}
-                height={200}
-                className="mt-2 w-32 h-32 object-cover rounded"
-                loading="lazy"
-              />
-            )}
-          </div>
-        </div>
-
-        <div className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-4 order-2 md:order-1">
           <div>
             <label className="block text-sm font-medium text-gray-700">Name *</label>
             <input
@@ -446,6 +530,104 @@ function PropertyForm({
                 required
               />
             </div>
+          </div>
+        </div>
+
+        <div className="space-y-4 order-1 md:order-2 mb-6 md:mb-0">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Image(s)</label>
+            <input
+              type="file"
+              name="images"
+              onChange={onImagesChange}
+              accept="image/*"
+              className="mt-1 block w-full"
+              required={!initialData && imagePreviews.length === 0}
+              multiple
+            />
+            
+            {/* Image Previews */}
+            {imagePreviews.length > 0 && (
+              <div className="mt-2">
+                <p className="text-sm font-medium text-gray-700 mb-1">New Images:</p>
+                <div className="flex flex-wrap gap-2">
+                  {imagePreviews.map((preview, idx) => (
+                    <div key={idx} className="relative">
+                      <Image 
+                        src={preview} 
+                        alt="Preview"
+                        width={80}
+                        height={80}
+                        className="w-20 h-20 object-cover rounded"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => onRemovePreview(idx)}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
+                        title="Remove"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {/* Existing Images */}
+            {initialData && existingImages.length > 0 && (
+              <div className="mt-4">
+                <div className="flex justify-between items-center mb-1">
+                  <p className="text-sm font-medium text-gray-700">Current Images:</p>
+                  <label className="flex items-center text-sm">
+                    <input
+                      type="checkbox"
+                      checked={replaceImages}
+                      onChange={(e) => setReplaceImages(e.target.checked)}
+                      className="mr-2"
+                    />
+                    Replace all current images
+                  </label>
+                </div>
+                
+                <div className="relative border rounded-md p-2">
+                  {existingImages.length > 1 && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={prevImage}
+                        className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white w-6 h-6 flex items-center justify-center rounded-full"
+                      >
+                        ←
+                      </button>
+                      <button
+                        type="button"
+                        onClick={nextImage}
+                        className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white w-6 h-6 flex items-center justify-center rounded-full"
+                      >
+                        →
+                      </button>
+                    </>
+                  )}
+                  
+                  <div className="flex justify-center">
+                    <Image 
+                      src={existingImages[currentImageIndex]?.url || '/placeholder.jpg'}
+                      alt="Current"
+                      width={300}
+                      height={200} 
+                      className="h-40 object-contain"
+                    />
+                  </div>
+                  
+                  {existingImages.length > 1 && (
+                    <div className="text-center mt-1 text-sm text-gray-500">
+                      Image {currentImageIndex + 1} of {existingImages.length}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
