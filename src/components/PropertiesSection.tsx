@@ -42,11 +42,6 @@ export default function PropertiesSection() {
 
   useEffect(() => {
     fetchProperties();
-
-    const intervalId = setInterval(() => {
-      fetchProperties();
-    }, 30000);
-    return () => clearInterval(intervalId);
   }, []);
 
   const filteredProperties = properties.filter(property =>
@@ -168,7 +163,7 @@ export default function PropertiesSection() {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
           <button
-            onClick={() => window.location.reload()}
+            onClick={fetchProperties}
             className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
             title="Refresh data"
           >
