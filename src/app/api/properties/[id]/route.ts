@@ -34,7 +34,11 @@ export async function PUT(
       area: number;
       floors: number;
       rooms: number;
+      balance: number;
+      monthlyRent: number;
     }
+
+    const addToBalance = Number(formData.get('addToBalance')) || 0;
     
     // Get current property first
     await dbConnect();
@@ -52,6 +56,9 @@ export async function PUT(
       area: Number(formData.get('area')) || currentProperty.area,
       floors: Number(formData.get('floors')) || currentProperty.floors,
       rooms: Number(formData.get('rooms')) || currentProperty.rooms,
+      balance: currentProperty.balance + addToBalance,
+      monthlyRent: Number(formData.get('monthlyRent')) || currentProperty.monthlyRent,
+
     };
     
     // Handle image updates (if any)

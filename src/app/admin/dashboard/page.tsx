@@ -5,6 +5,7 @@ import Header from '../../../components/Header';
 import UsersSection from '../../../components/UsersSection';
 import PropertiesSection from '../../../components/PropertiesSection';
 import VerificationSection from '../../../components/VerificationSection';
+import PendingSharesProcessor from '@/components/pendingShares';
 
 // Set to force revalidation on every request
 export const revalidate = 0;
@@ -37,6 +38,10 @@ export default async function AdminDashboard() {
             <div className="border-4 border-dashed border-gray-200 rounded-lg p-4 my-5">
                 <h3 className="mb-1">Verification Management</h3>
                 <VerificationSection />
+            </div>
+            <div className="border-4 border-dashed border-gray-200 rounded-lg p-4 my-5">
+                <h3 className="mb-1">pending shares</h3>
+                <PendingSharesProcessor />
             </div>
           </div>
         </div>

@@ -21,6 +21,7 @@ export interface IProperty extends Document {
     sharePrice: number;
     availableShares: number;
     balance: number;
+    monthlyRent: number;
     shares: Array<{
         userId: mongoose.Types.ObjectId;
         shares: number;
@@ -54,6 +55,7 @@ const PropertySchema = new Schema<IProperty>({
     sharePrice: { type: Number, required: true },
     availableShares: { type: Number, required: true },
     balance: { type: Number, default: 0 },
+    monthlyRent: { type: Number, default: 0 },
     shares: [{
         userId: { 
             type: Schema.Types.ObjectId,

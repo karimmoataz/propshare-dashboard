@@ -488,6 +488,39 @@ function PropertyForm({
           </div>
 
           <div>
+            <label className="block text-sm font-medium text-gray-700">Monthly Rent ($) *</label>
+            <input
+              name="monthlyRent"
+              type="number"
+              defaultValue={initialData?.monthlyRent || ''}
+              className="mt-1 block w-full border rounded-md p-2"
+              required
+            />
+          </div>
+
+          {initialData && (
+            <>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Current Balance</label>
+                <input
+                  value={initialData.balance.toFixed(2)}
+                  className="mt-1 block w-full border rounded-md p-2 bg-gray-100"
+                  readOnly
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Add to Balance ($)</label>
+                <input
+                  name="addToBalance"
+                  type="number"
+                  defaultValue="0"
+                  className="mt-1 block w-full border rounded-md p-2"
+                />
+              </div>
+            </>
+          )}
+
+          <div>
             <label className="block text-sm font-medium text-gray-700">Location *</label>
             <input
               name="location"

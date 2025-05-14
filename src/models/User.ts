@@ -10,6 +10,7 @@ export interface IUser extends Document {
   password: string;
   balance: number;
   pendingIncome: number;
+  pendingInvestment: number;
   outcome: number;
   verified: boolean;
   role: 'admin' | 'user';
@@ -55,6 +56,7 @@ const UserSchema = new Schema<IUser>(
     password: { type: String, required: true },
     balance: { type: Number, default: 0 },
     pendingIncome: { type: Number, default: 0 },
+    pendingInvestment: { type: Number, required: true, default: 0 },
     outcome: { type: Number, default: 0 },
     verified: { type: Boolean, default: false },
     role: { type: String, enum: ['admin', 'user'], default: 'user' },
