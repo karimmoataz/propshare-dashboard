@@ -23,6 +23,10 @@ export default function PropertiesSection() {
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [replaceImages, setReplaceImages] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [documentFiles, setDocumentFiles] = useState<File[]>([]);
+  const [documentPreviews, setDocumentPreviews] = useState<Array<{ name: string; url: string }>>([]);
+  const [replaceDocuments, setReplaceDocuments] = useState(false);
+  
 
   const fetchProperties = async () => {
     try {
@@ -84,6 +88,13 @@ export default function PropertiesSection() {
       setShowAddModal(false);
       setImageFiles([]);
       setImagePreviews([]);
+      setDocumentFiles([]);
+      setDocumentPreviews([]);
+      setReplaceDocuments(false);
+      formData.delete('documents');
+      for (const file of documentFiles) {
+        formData.append('documents', file);
+      }
       
       // Force a page refresh to ensure we get fresh data
       window.location.reload();
@@ -170,6 +181,15 @@ export default function PropertiesSection() {
       setImageFiles([]);
       setImagePreviews([]);
       setReplaceImages(false);
+      setDocumentFiles([]);
+      setDocumentPreviews([]);
+      setReplaceDocuments(false);
+
+      formData.append('replaceDocuments', replaceDocuments.toString());
+      formData.delete('documents');
+      for (const file of documentFiles) {
+        formData.append('documents', file);
+      }
       
       // Force a page refresh to ensure we get fresh data
       window.location.reload();
@@ -217,6 +237,27 @@ export default function PropertiesSection() {
       setCurrentImageIndex((prev) => (prev - 1 + property.images.length) % property.images.length);
     }
   };
+
+  const handleDocumentsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const files = e.target.files;
+  if (!files || files.length === 0) return;
+  
+  const newFiles = Array.from(files);
+  setDocumentFiles(prev => [...prev, ...newFiles]);
+  
+  // Create preview objects with name and URL
+  for (const file of newFiles) {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setDocumentPreviews(prev => [...prev, {
+        name: file.name,
+        url: reader.result as string
+      }]);
+    };
+    reader.readAsDataURL(file);
+  }
+};
+
 
   if (isLoading) return <div className="p-4">Loading properties...</div>;
   if (error) return <div className="p-4 text-red-500">{error}</div>;
@@ -333,12 +374,24 @@ export default function PropertiesSection() {
                 setShowAddModal(false);
                 setImageFiles([]);
                 setImagePreviews([]);
+                setDocumentFiles([]);
+                setDocumentPreviews([]);
+                setReplaceDocuments(false);
               }}
               imagePreviews={imagePreviews}
               onImagesChange={handleImagesChange}
               onRemovePreview={handleRemovePreview}
               replaceImages={replaceImages}
               setReplaceImages={setReplaceImages}
+              documentPreviews={documentPreviews}
+              onDocumentsChange={handleDocumentsChange}
+              onRemoveDocPreview={(index) => {
+                setDocumentFiles(prev => prev.filter((_, i) => i !== index));
+                setDocumentPreviews(prev => prev.filter((_, i) => i !== index));
+              }}
+              existingDocuments={editingProperty?.documents || []}
+              replaceDocuments={replaceDocuments}
+              setReplaceDocuments={setReplaceDocuments}
             />
           </div>
         </div>
@@ -354,6 +407,9 @@ export default function PropertiesSection() {
                 setImageFiles([]);
                 setImagePreviews([]);
                 setReplaceImages(false);
+                setDocumentFiles([]);
+                setDocumentPreviews([]);
+                setReplaceDocuments(false);
               }}
               initialData={editingProperty}
               imagePreviews={imagePreviews}
@@ -362,6 +418,14 @@ export default function PropertiesSection() {
               existingImages={editingProperty.images}
               replaceImages={replaceImages}
               setReplaceImages={setReplaceImages}
+              documentPreviews={documentPreviews}
+              onDocumentsChange={handleDocumentsChange}
+              onRemoveDocPreview={(index) => {
+                setDocumentFiles((prev) => prev.filter((_, i) => i !== index));
+                setDocumentPreviews((prev) => prev.filter((_, i) => i !== index));
+              }}
+              replaceDocuments={replaceDocuments}
+              setReplaceDocuments={setReplaceDocuments}
             />
           </div>
         </div>
@@ -380,6 +444,12 @@ interface PropertyFormProps {
   existingImages?: { url: string; publicId: string }[];
   replaceImages: boolean;
   setReplaceImages: (value: boolean) => void;
+  documentPreviews: Array<{ name: string; url: string }>;
+  onDocumentsChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onRemoveDocPreview: (index: number) => void;
+  existingDocuments?: Array<{ url: string; publicId: string; filename: string }>;
+  replaceDocuments: boolean;
+  setReplaceDocuments: (value: boolean) => void;
 }
 
 function PropertyForm({ 
@@ -391,13 +461,21 @@ function PropertyForm({
   onRemovePreview,
   existingImages = [],
   replaceImages,
-  setReplaceImages
+  setReplaceImages,
+  documentPreviews,
+  onDocumentsChange,
+  onRemoveDocPreview,
+  existingDocuments = [],
+  replaceDocuments,
+  setReplaceDocuments
 }: PropertyFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [sharePrice, setSharePrice] = useState(
     initialData?.sharePrice || 0
   );
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [rentAmount, setRentAmount] = useState('');
+  const [distributionStatus, setDistributionStatus] = useState('');
 
   const calculateSharePrice = (currentPrice: string, shares: string) => {
     const price = parseFloat(currentPrice);
@@ -431,6 +509,40 @@ function PropertyForm({
       setCurrentImageIndex((prev) => (prev - 1 + existingImages.length) % existingImages.length);
     }
   };
+
+  const handleDistributeRent = async () => {
+  if (!rentAmount || isNaN(Number(rentAmount))) {
+    alert('Please enter a valid rent amount');
+    return;
+  }
+
+  try {
+    setDistributionStatus('processing');
+    if (!initialData?._id) {
+      alert('Property ID is missing');
+      setDistributionStatus('');
+      return;
+    }
+    const response = await fetch(`/api/properties/${initialData._id}/rent`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ rentAmount: Number(rentAmount) }),
+    });
+
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || 'Distribution failed');
+
+    alert(`Rent distributed successfully! ${data.message}`);
+    setRentAmount('');
+  } catch (error) {
+    console.error('Distribution error:', error);
+    alert(error instanceof Error ? error.message : 'Distribution failed');
+  } finally {
+    setDistributionStatus('');
+  }
+};
 
   return (
     <form onSubmit={handleSubmit}>
@@ -662,6 +774,93 @@ function PropertyForm({
               </div>
             )}
           </div>
+        </div>
+      </div>
+
+          {/* <div className="mt-4 space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Documents (PDF)</label>
+          <input
+            type="file"
+            name="documents"
+            onChange={onDocumentsChange}
+            accept="application/pdf"
+            className="mt-1 block w-full"
+            multiple
+          />
+          
+          {documentPreviews.length > 0 && (
+            <div className="mt-2">
+              <p className="text-sm font-medium text-gray-700 mb-1">New Documents:</p>
+              <div className="flex flex-wrap gap-2">
+                {documentPreviews.map((preview, idx) => (
+                  <div key={idx} className="relative border rounded p-2">
+                    <span className="text-sm">{preview.name}</span>
+                    <button
+                      type="button"
+                      onClick={() => onRemoveDocPreview(idx)}
+                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          
+          {initialData && existingDocuments.length > 0 && (
+            <div className="mt-4">
+              <div className="flex justify-between items-center mb-1">
+                <p className="text-sm font-medium text-gray-700">Current Documents:</p>
+                <label className="flex items-center text-sm">
+                  <input
+                    type="checkbox"
+                    checked={replaceDocuments}
+                    onChange={(e) => setReplaceDocuments(e.target.checked)}
+                    className="mr-2"
+                  />
+                  Replace all current documents
+                </label>
+              </div>
+              
+              <div className="space-y-2">
+                {existingDocuments.map((doc, index) => (
+                  <div key={index} className="flex items-center justify-between border rounded p-2">
+                    <a
+                      href={doc.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:underline text-sm"
+                    >
+                      {doc.filename}
+                    </a>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div> */}
+
+      <div className="mt-6 p-4 border rounded-lg bg-gray-50">
+        <h3 className="text-lg font-semibold mb-2">Distribute Rent Income</h3>
+        <div className="flex gap-2 items-center">
+          <input
+            type="number"
+            value={rentAmount}
+            onChange={(e) => setRentAmount(e.target.value)}
+            placeholder="Enter rent amount"
+            className="border p-2 rounded-lg flex-1"
+            disabled={distributionStatus === 'processing'}
+          />
+          <button
+            onClick={handleDistributeRent}
+            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 disabled:bg-gray-400"
+            disabled={distributionStatus === 'processing'}
+          >
+            {distributionStatus === 'processing' ? 'Processing...' : 'Distribute Rent'}
+          </button>
         </div>
       </div>
 

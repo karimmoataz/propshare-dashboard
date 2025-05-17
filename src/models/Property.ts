@@ -4,6 +4,7 @@ export interface IProperty extends Document {
     _id: string;
     name: string;
     images: { url: string; publicId: string }[];
+    documents: { url: string; publicId: string; filename: string; contentType: string }[];
     contentType: string;
     currentPrice: number;
     currentPriceDate: Date;
@@ -32,14 +33,32 @@ const PropertySchema = new Schema<IProperty>({
     name: { type: String, required: true },
     images: [{
     url: {
-      type: String,
-      required: true
-    },
-    publicId: {
-      type: String,
-      required: true
-    }
-  }],
+        type: String,
+        required: true
+        },
+        publicId: {
+        type: String,
+        required: true
+        }
+     }],
+//    documents: [{
+//       url: {
+//         type: String,
+//         required: true
+//       },
+//       publicId: {
+//         type: String,
+//         required: true
+//       },
+//       filename: {
+//         type: String,
+//         required: true
+//       },
+//       contentType: {
+//         type: String,
+//         required: true
+//       }
+//     }],
     contentType: { type: String, required: true },
     currentPrice: { type: Number, required: true },
     currentPriceDate: { type: Date, default: Date.now },

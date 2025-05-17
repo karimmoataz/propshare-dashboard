@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import authOptions from '../../auth/config';
 import Property from '../../../../models/Property';
 import dbConnect from '../../../../lib/db';
-import { uploadToCloudinary, deleteFromCloudinary } from '../../../../lib/cloudinary';
+import { uploadToCloudinary, deleteFromCloudinary, uploadDocumentToCloudinary, deleteDocumentFromCloudinary } from '../../../../lib/cloudinary';
 
 export const revalidate = 0;
 export const dynamic = 'force-dynamic';
@@ -58,7 +58,6 @@ export async function PUT(
       rooms: Number(formData.get('rooms')) || currentProperty.rooms,
       balance: currentProperty.balance + addToBalance,
       monthlyRent: Number(formData.get('monthlyRent')) || currentProperty.monthlyRent,
-
     };
     
     // Handle image updates (if any)
@@ -98,6 +97,47 @@ export async function PUT(
       }
     }
     
+    // Handle document updates
+    const shouldReplaceDocuments = formData.get('replaceDocuments') === 'true';
+    let documents: { url: string; publicId: string; filename: string; contentType: string }[] = currentProperty.documents || []; // Start with current documents
+    
+    if (shouldReplaceDocuments) {
+      // Delete all existing documents from Cloudinary
+      if (documents.length > 0) {
+        for (const doc of documents) {
+          try {
+            await deleteDocumentFromCloudinary(doc.publicId);
+          } catch (error) {
+            console.error('Error deleting document:', error);
+            // Continue even if some deletions fail
+          }
+        }
+        documents = []; // Clear existing documents
+      }
+    }
+    
+    // Process new documents (if any)
+    const documentFiles = formData.getAll('documents') as File[];
+    if (documentFiles && documentFiles.length > 0 && documentFiles[0].size > 0) {
+      for (const docFile of documentFiles) {
+        if (docFile.type === 'application/pdf') {
+          const docBuffer = Buffer.from(await docFile.arrayBuffer());
+          const uploadResult = await uploadDocumentToCloudinary(
+            docBuffer, 
+            docFile.type,
+            docFile.name
+          );
+          
+          documents.push({
+            url: uploadResult.url,
+            publicId: uploadResult.publicId,
+            filename: docFile.name,
+            contentType: docFile.type
+          });
+        }
+      }
+    }
+    
     // Remove specific images if requested
     const imagesToRemove = formData.getAll('removeImages') as string[];
     if (imagesToRemove && imagesToRemove.length > 0) {
@@ -107,6 +147,19 @@ export async function PUT(
           images = images.filter(img => img.publicId !== imagePublicId);
         } catch (error) {
           console.error(`Error removing image ${imagePublicId}:`, error);
+        }
+      }
+    }
+    
+    // Remove specific documents if requested
+    const docsToRemove = formData.getAll('removeDocuments') as string[];
+    if (docsToRemove && docsToRemove.length > 0) {
+      for (const docPublicId of docsToRemove) {
+        try {
+          await deleteDocumentFromCloudinary(docPublicId);
+          documents = documents.filter((doc: { publicId: string }) => doc.publicId !== docPublicId);
+        } catch (error) {
+          console.error(`Error removing document ${docPublicId}:`, error);
         }
       }
     }
@@ -126,6 +179,7 @@ export async function PUT(
         {
           ...updateData,
           images: images,
+          documents: documents,
           $push: { 
             previousPrices: { 
               price: currentProperty.currentPrice,
@@ -141,7 +195,8 @@ export async function PUT(
         id,
         {
           ...updateData,
-          images: images
+          images: images,
+          documents: documents
         },
         { new: true }
       );
@@ -175,7 +230,7 @@ export async function DELETE(
   try {
     await dbConnect();
     
-    // Find the property first to get image references
+    // Find the property first to get image and document references
     const property = await Property.findById(id);
     
     if (!property) {
@@ -190,6 +245,18 @@ export async function DELETE(
         } catch (error) {
           console.error(`Error deleting image ${image.publicId}:`, error);
           // Continue deletion process even if some image deletions fail
+        }
+      }
+    }
+    
+    // Delete all associated documents from Cloudinary
+    if (property.documents && property.documents.length > 0) {
+      for (const doc of property.documents) {
+        try {
+          await deleteDocumentFromCloudinary(doc.publicId);
+        } catch (error) {
+          console.error(`Error deleting document ${doc.publicId}:`, error);
+          // Continue deletion process even if some document deletions fail
         }
       }
     }

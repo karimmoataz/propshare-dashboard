@@ -6,8 +6,8 @@ export interface ITransaction extends Document {
   paymobId?: string;
   amount: number;
   date: Date;
-  type: 'Deposit' | 'Withdraw' | 'Transfer';
-  source: 'Card' | 'Bank' | 'Cash' | 'Investment' | 'Dividend';
+  type: 'Deposit' | 'Withdraw';
+  source: 'Card' | 'Bank' | 'Cash' | 'Investment' | 'Dividend' | 'rent';
   description?: string;
   createdAt: Date;
   updatedAt: Date;
@@ -39,12 +39,12 @@ const TransactionSchema: Schema = new Schema(
     },
     type: {
       type: String,
-      enum: ['Deposit', 'Withdraw', 'Transfer'],
+      enum: ['Deposit', 'Withdraw'],
       required: true,
     },
     source: {
       type: String,
-      enum: ['Card', 'Bank', 'Cash', 'Investment', 'Dividend'],
+      enum: ['Card', 'Bank', 'Cash', 'Investment', 'Dividend', 'rent'],
       required: true,
     },
     description: {

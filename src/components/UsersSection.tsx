@@ -107,7 +107,7 @@ export default function UsersSection() {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Username</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Balance</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
+              {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th> */}
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
             </tr>
           </thead>
@@ -118,7 +118,7 @@ export default function UsersSection() {
                 <td className="px-6 py-4 whitespace-nowrap">{user.email}</td>
                 <td className="px-6 py-4 whitespace-nowrap">{user.username}</td>
                 <td className="px-6 py-4 whitespace-nowrap">${typeof user.balance === 'number' ? user.balance.toFixed(2) : '0.00'}</td>
-                <td className="px-6 py-4 whitespace-nowrap capitalize">{user.role}</td>
+                {/* <td className="px-6 py-4 whitespace-nowrap capitalize">{user.role}</td> */}
                 <td className="px-6 py-4 whitespace-nowrap">
                   <button
                     onClick={() => setEditingUser(user)}
@@ -374,7 +374,7 @@ function EditForm({ user, onClose, onSave }: { user: IUser; onClose: () => void;
             className="mt-1 block w-full border rounded-md p-2"
           />
         </div>
-        <div>
+        {/* <div>
           <label className="block text-sm font-medium text-gray-700">Role</label>
           <select
             name="role"
@@ -385,7 +385,7 @@ function EditForm({ user, onClose, onSave }: { user: IUser; onClose: () => void;
             <option value="user">User</option>
             <option value="admin">Admin</option>
           </select>
-        </div>
+        </div> */}
       </div>
       <div className="mt-6 flex justify-end gap-3">
         <button

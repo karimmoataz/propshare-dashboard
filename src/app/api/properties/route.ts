@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import authOptions from '../auth/config';
 import Property from '../../../models/Property';
 import dbConnect from '../../../lib/db';
-import { uploadToCloudinary } from '../../../lib/cloudinary';
+import { uploadToCloudinary, uploadDocumentToCloudinary } from '../../../lib/cloudinary';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -71,6 +71,35 @@ export async function POST(req: Request) {
                 publicId: fullPublicId
             });
         }
+        
+        // Process document files (multiple)
+        const documentUrls = [];
+        const documentFiles = formData.getAll('documents') as File[];
+        
+        // Process documents if any are uploaded
+        if (documentFiles && documentFiles.length > 0 && documentFiles[0].size > 0) {
+            for (const docFile of documentFiles) {
+                // Check if file is a PDF
+                if (docFile.type === 'application/pdf') {
+                    const docBuffer = Buffer.from(await docFile.arrayBuffer());
+                    const uploadResult = await uploadDocumentToCloudinary(
+                        docBuffer, 
+                        docFile.type,
+                        docFile.name
+                    );
+                    
+                    documentUrls.push({
+                        url: uploadResult.url,
+                        publicId: uploadResult.publicId,
+                        filename: docFile.name,
+                        contentType: docFile.type
+                    });
+                } else {
+                    console.warn('Skipping non-PDF document:', docFile.name);
+                    // Continue processing other files even if one is not a PDF
+                }
+            }
+        }
 
         // Parse numeric fields
         const numericFields = [
@@ -110,6 +139,7 @@ export async function POST(req: Request) {
         const propertyData = {
             name: formData.get('name')!.toString(),
             images: imageUrls,
+            documents: documentUrls,
             currentPrice: fieldValues.currentPrice,
             currentPriceDate: new Date(),
             previousPrices: [],
@@ -122,8 +152,8 @@ export async function POST(req: Request) {
             availableShares: fieldValues.numberOfShares,
             balance: 0,
             shares: [],
-            contentType: imageFiles[0].type, // Add contentType field at the property level
-            image: imageUrls.length > 0 ? imageUrls[0].url : '' // Add image field at the property level
+            contentType: imageFiles[0].type,
+            monthlyRent: Number(formData.get('monthlyRent')) || 0
         };
 
         const newProperty = await Property.create(propertyData);
