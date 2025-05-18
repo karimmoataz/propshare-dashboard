@@ -27,17 +27,17 @@ export interface IUser extends Document {
     nationalId?: string;
     status?: 'not_submitted' | 'pending' | 'verified' | 'rejected';
     frontId?: {
-      data: Buffer;
+      data: String;
       contentType: string;
       uploadDate?: Date;
     };
     backId?: {
-      data: Buffer;
+      data: String;
       contentType: string;
       uploadDate?: Date;
     };
     selfie?: {
-      data: Buffer;
+      data: String;
       contentType: string;
       uploadDate?: Date;
     };
@@ -50,46 +50,51 @@ export interface IUser extends Document {
 const UserSchema = new Schema<IUser>(
   {
     fullName: { type: String, required: true },
-    email: { type: String, required: true, unique: true, lowercase: true },
-    username: { type: String, required: true, unique: true, lowercase: true },
-    phone: { type: String, required: true },
-    password: { type: String, required: true },
-    balance: { type: Number, default: 0 },
-    pendingIncome: { type: Number, default: 0 },
-    pendingInvestment: { type: Number, required: true, default: 0 },
-    outcome: { type: Number, default: 0 },
-    verified: { type: Boolean, default: false },
-    role: { type: String, enum: ['admin', 'user'], default: 'user' },
-    verificationToken: String,
-    resetPasswordToken: String,
-    resetPasswordExpires: Date,
-    ownedShares: [
-      {
-        propertyId: { type: Schema.Types.ObjectId, ref: 'Property' },
-        shares: { type: Number, default: 0 }
-      }
-    ],
-    oldPasswords: [String],
-    idVerification: {
-      nationalId: { type: String },
-      status: { type: String, enum: ['not_submitted', 'pending', 'verified', 'rejected'], default: 'not_submitted' },
-      frontId: {
-        data: Buffer,
-        contentType: String,
-        uploadDate: { type: Date, default: Date.now }
-      },
-      backId: {
-        data: Buffer,
-        contentType: String,
-        uploadDate: { type: Date, default: Date.now }
-      },
-      selfie: {
-        data: Buffer,
-        contentType: String,
-        uploadDate: { type: Date, default: Date.now }
-      },
-      rejectionReason: String,
-      verifiedDate: Date
+  email: { type: String, required: true, unique: true, lowercase: true },
+  username: { type: String, required: true, unique: true },
+  phone: { type: String, required: true },
+  password: { type: String, required: true },
+  balance: { type: Number, required: true, default: 0 },
+  pendingIncome: { type: Number, required: true, default: 0 },
+  pendingInvestment: { type: Number, required: true, default: 0 },
+  outcome: { type: Number, required: true, default: 0 },
+  verified: { type: Boolean, default: false },
+  role: { type: String, enum: ["user", "admin"], default: "user" },
+  verificationToken: { type: String },
+  resetPasswordToken: { type: String },
+  resetPasswordExpires: { type: Date },
+  oldPasswords: [{ type: String }],
+  ownedShares: [
+    {
+      propertyId: { type: Schema.Types.ObjectId, ref: 'Property' },
+      shares: { type: Number, default: 0 }
+    }
+  ],
+  idVerification: {
+    nationalId: { type: String },
+    status: { 
+      type: String, 
+      enum: ['not_submitted', 'pending', 'verified', 'rejected'], 
+      default: 'not_submitted' 
+    },
+    frontId: {
+      url: String,
+      publicId: String,
+      uploadDate: { type: Date }
+    },
+    backId: {
+      url: String,
+      publicId: String,
+      uploadDate: { type: Date }
+    },
+    selfie: {
+      url: String,
+      publicId: String,
+      uploadDate: { type: Date }
+    },
+    rejectionReason: String,
+    verifiedDate: Date,
+    submittedDate: Date
     }
   },
   { timestamps: true }
