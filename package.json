@@ -15,6 +15,7 @@
     "class-variance-authority": "^0.7.1",
     "cloudinary": "^2.6.1",
     "clsx": "^2.1.1",
+    "expo-server-sdk": "^3.15.0",
     "lucide-react": "^0.485.0",
     "mongodb": "^6.15.0",
     "mongoose": "^8.13.1",
