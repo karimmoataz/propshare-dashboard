@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import authOptions from '../auth/config';
 import Withdrawal from '../../../models/Withdrawal';
-import dbConnect from '@/lib/db';
+import dbConnect from '../../../lib/db';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;

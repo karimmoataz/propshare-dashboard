@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import authOptions from '../../auth/config';
 import Notification from '../../../../models/Notifications';
 import User from '../../../../models/User';
-import dbConnect from '@/lib/db';
+import dbConnect from '../../../../lib/db';
 import { Expo } from 'expo-server-sdk';
 
 export const dynamic = 'force-dynamic';

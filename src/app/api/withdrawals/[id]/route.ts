@@ -4,7 +4,7 @@ import authOptions from '../../auth/config';
 import Withdrawal from '../../../../models/Withdrawal';
 import User from '../../../../models/User';
 import Transaction from '../../../../models/Transaction';
-import dbConnect from '@/lib/db';
+import dbConnect from '../../../../lib/db';
 import mongoose from 'mongoose';
 
 export const dynamic = 'force-dynamic';
