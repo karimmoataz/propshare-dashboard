@@ -5,9 +5,6 @@
         "use": "@vercel/next",
         "config": {
           "installCommand": "npm install --force"
-        },
-        "env": {
-          "NODE_MODULES_CACHE": "false"
         }
       }
     ]
