@@ -188,7 +188,7 @@ export default function UsersSection() {
                 <div className="flex-1">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Front ID</label>
                   <img 
-                    src={`data:${viewingIdUser.idVerification.frontId.contentType};base64,${viewingIdUser.idVerification.frontId.data}`}
+                    src={viewingIdUser.idVerification.frontId?.url.toString()}
                     className="h-48 w-full object-contain border"
                     alt="Front ID"
                     loading="lazy"
@@ -204,7 +204,7 @@ export default function UsersSection() {
                 <div className="flex-1">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Back ID</label>
                   <img 
-                    src={`data:${viewingIdUser.idVerification.backId.contentType};base64,${viewingIdUser.idVerification.backId.data}`}
+                    src={viewingIdUser.idVerification.backId?.url.toString()}
                     className="h-48 w-full object-contain border"
                     alt="Back ID"
                     loading="lazy"
@@ -220,7 +220,7 @@ export default function UsersSection() {
                 <div className="flex-1">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Selfie</label>
                   <img 
-                    src={`data:${viewingIdUser.idVerification.selfie.contentType};base64,${viewingIdUser.idVerification.selfie.data}`}
+                    src={viewingIdUser.idVerification.selfie?.url.toString()}
                     className="h-48 w-full object-contain border"
                     alt="Selfie"
                     loading="lazy"

@@ -27,17 +27,17 @@ export interface IUser extends Document {
     nationalId?: string;
     status?: 'not_submitted' | 'pending' | 'verified' | 'rejected';
     frontId?: {
-      data: String;
+      url: String;
       contentType: string;
       uploadDate?: Date;
     };
     backId?: {
-      data: String;
+      url: String;
       contentType: string;
       uploadDate?: Date;
     };
     selfie?: {
-      data: String;
+      url: String;
       contentType: string;
       uploadDate?: Date;
     };

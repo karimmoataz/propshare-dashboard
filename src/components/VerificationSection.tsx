@@ -103,7 +103,7 @@ export default function VerificationSection() {
                     <div className="flex gap-4">
                       {user.idVerification?.frontId && (
                         <img 
-                          src={`data:${user.idVerification.frontId.contentType};base64,${user.idVerification.frontId.data}`}
+                          src={user.idVerification.frontId.url?.toString()}
                           className="h-20 w-32 object-cover border"
                           alt="Front ID"
                           loading="lazy"
@@ -111,7 +111,7 @@ export default function VerificationSection() {
                       )}
                       {user.idVerification?.backId && (
                         <img 
-                          src={`data:${user.idVerification.backId.contentType};base64,${user.idVerification.backId.data}`}
+                          src={user.idVerification.backId?.url.toString()}
                           className="h-20 w-32 object-cover border"
                           alt="Back ID"
                           loading="lazy"
@@ -119,7 +119,7 @@ export default function VerificationSection() {
                       )}
                       {user.idVerification?.selfie && (
                         <img 
-                          src={`data:${user.idVerification.selfie.contentType};base64,${user.idVerification.selfie.data}`}
+                          src={user.idVerification.selfie?.url.toString()}
                           className="h-20 w-32 object-cover border"
                           alt="Selfie"
                           loading="lazy"
@@ -166,7 +166,7 @@ export default function VerificationSection() {
             <div className="flex gap-4 mb-6">
               {selectedUser.idVerification?.frontId && (
                 <img 
-                  src={`data:${selectedUser.idVerification.frontId.contentType};base64,${selectedUser.idVerification.frontId.data}`}
+                  src={selectedUser.idVerification.frontId?.url.toString()}
                   className="h-48 w-full object-contain border"
                   alt="Front ID"
                   loading="lazy"
@@ -174,7 +174,7 @@ export default function VerificationSection() {
               )}
               {selectedUser.idVerification?.backId && (
                 <img 
-                  src={`data:${selectedUser.idVerification.backId.contentType};base64,${selectedUser.idVerification.backId.data}`}
+                  src={selectedUser.idVerification.backId?.url.toString()}
                   className="h-48 w-full object-contain border"
                   alt="Back ID"
                   loading="lazy"
@@ -182,7 +182,7 @@ export default function VerificationSection() {
               )}
               {selectedUser.idVerification?.selfie && (
                 <img 
-                  src={`data:${selectedUser.idVerification.selfie.contentType};base64,${selectedUser.idVerification.selfie.data}`}
+                  src={selectedUser.idVerification.selfie?.url.toString()}
                   className="h-48 w-full object-contain border"
                   alt="Selfie"
                   loading="lazy"
