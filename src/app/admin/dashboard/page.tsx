@@ -9,11 +9,9 @@ import PendingSharesProcessor from '../../../components/pendingShares';
 import WithdrawalsSection from '../../../components/WithdrawalsSection';
 import NotificationsSection from '../../../components/NotificationsSection';
 
-// Set to force revalidation on every request
 export const revalidate = 0;
 
 export default async function AdminDashboard() {
-  // Check if user is authenticated and is admin
   const session = await getServerSession(authOptions);
   
   if (!session || session.user.role !== 'admin') {
@@ -21,39 +19,42 @@ export default async function AdminDashboard() {
   }
   
   return (
-    <div className="min-h-screen bg-gray-100">
-        <Header userName={session.user.name || 'Guest'}/>
-        <main>
-        <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-          <div className="px-4 py-6 sm:px-0">
-          <h2 className="text-xl font-semibold mb-4">Admin Dashboard</h2>
-            <div className="border-4 border-dashed border-gray-200 rounded-lg p-4 my-5">
-                <div>
-                    <h3 className="mb-1">User Management</h3>
-                    <UsersSection />
-                </div>
-            </div>
-            <div className="border-4 border-dashed border-gray-200 rounded-lg p-4 my-5">
-                <h3 className="mb-1">Properties Management</h3>
-                <PropertiesSection />
-            </div>
-            <div className="border-4 border-dashed border-gray-200 rounded-lg p-4 my-5">
-                <h3 className="mb-1">pending shares</h3>
-                <PendingSharesProcessor />
-            </div>
-            <div className="border-4 border-dashed border-gray-200 rounded-lg p-4 my-5">
-                <h3 className="mb-1">Withdrawals</h3>
-                <WithdrawalsSection />
-            </div>
-            <div className="border-4 border-dashed border-gray-200 rounded-lg p-4 my-5">
-                <h3 className="mb-1">Verification Management</h3>
-                <VerificationSection />
-            </div>
-            <div className="border-4 border-dashed border-gray-200 rounded-lg p-4 my-5">
-                <h3 className="mb-1">Notifications Section</h3>
-                <NotificationsSection />
-            </div>
+    <div className="admin-dashboard">
+      <Header userName={session.user.name || 'Guest'}/>
+      <main className="dashboard-main">
+        <div className="dashboard-container">
+          <div className="dashboard-content">
+            <h2 className="main-title">Admin Dashboard</h2>
             
+            <div className="dashboard-section">
+              <h3 className="section-heading">User Management</h3>
+              <UsersSection />
+            </div>
+
+            <div className="dashboard-section">
+              <h3 className="section-heading">Properties Management</h3>
+              <PropertiesSection />
+            </div>
+
+            <div className="dashboard-section">
+              <h3 className="section-heading">Pending Shares</h3>
+              <PendingSharesProcessor />
+            </div>
+
+            <div className="dashboard-section">
+              <h3 className="section-heading">Withdrawals</h3>
+              <WithdrawalsSection />
+            </div>
+
+            <div className="dashboard-section">
+              <h3 className="section-heading">Verification Management</h3>
+              <VerificationSection />
+            </div>
+
+            <div className="dashboard-section">
+              <h3 className="section-heading">Notifications Section</h3>
+              <NotificationsSection />
+            </div>
           </div>
         </div>
       </main>
