@@ -159,8 +159,8 @@ export async function POST(
         .lean<Array<{ expoPushToken?: string }>>();
       
       tokens = users
-        .map(user => user.expoPushToken)
-        .filter((token): token is string => typeof token === 'string' && Expo.isExpoPushToken(token));
+        .map((user: { expoPushToken?: string }) => user.expoPushToken)
+        .filter((token: unknown): token is string => typeof token === 'string' && Expo.isExpoPushToken(token));
       
     } else if (notification.userId) {
       // Get specific user for targeted notification
