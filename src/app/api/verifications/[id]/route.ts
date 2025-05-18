@@ -59,9 +59,9 @@ export async function PUT(req: Request, context: { params: { id: string } }) {
         status: user.idVerification?.status,
         verifiedDate: user.idVerification?.verifiedDate,
         rejectionReason: user.idVerification?.rejectionReason,
-        frontId: user.idVerification?.frontId?.data,
-        backId: user.idVerification?.backId?.data,
-        selfie: user.idVerification?.selfie?.data
+        frontId: user.idVerification?.frontId?.url,
+        backId: user.idVerification?.backId?.url,
+        selfie: user.idVerification?.selfie?.url
       },
       fullName: user.fullName,
       email: user.email,

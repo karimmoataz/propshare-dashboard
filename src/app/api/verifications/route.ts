@@ -24,9 +24,9 @@ export async function GET() {
       ...user,
       idVerification: {
         ...user.idVerification,
-        frontId: user.idVerification?.frontId?.data || null,
-        backId: user.idVerification?.backId?.data || null,
-        selfie: user.idVerification?.selfie?.data || null
+        frontId: user.idVerification?.frontId?.url || null,
+        backId: user.idVerification?.backId?.url || null,
+        selfie: user.idVerification?.selfie?.url || null
       }
     }));
 
