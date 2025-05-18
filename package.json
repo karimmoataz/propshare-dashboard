@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "clean-install": "rm -rf node_modules && rm -f package-lock.json && npm install",
-    "build": "npm run clean-install && next build",
+    "clean-install": "rm -rf node_modules && npm install",
+    "build": "next build",
     "start": "next start",
     "lint": "next lint"
   },
@@ -26,6 +26,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "tailwind-merge": "^3.0.2",
+    "tailwindcss": "^4.1.7",
     "tw-animate-css": "^1.2.5"
   },
   "devDependencies": {
@@ -43,7 +44,6 @@
     "eslint-config-next": "15.2.4",
     "lightningcss": "^1.29.3",
     "postcss": "^8.5.3",
-    "tailwindcss": "^4.1.7",
     "typescript": "^5.8.2"
   }
 }
