@@ -179,7 +179,7 @@ export default function WithdrawalsSection() {
               {selectedWithdrawal.method === 'E-Wallet' && (
                 <>
                   <p><strong>Provider:</strong> {selectedWithdrawal.details?.provider || 'N/A'}</p>
-                  <p><strong>Mobile Number:</strong> {selectedWithdrawal.details?.mobileNumber || 'N/A'}</p>
+                  <p><strong>Mobile Number:</strong> {selectedWithdrawal.details?.accountNumber || 'N/A'}</p>
                 </>
               )}
               {selectedWithdrawal.method === 'InstaPay' && (

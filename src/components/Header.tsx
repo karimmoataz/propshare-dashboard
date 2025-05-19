@@ -18,6 +18,11 @@ function Header({ userName }: HeaderProps) {
             height={50}
             className="logo"
           />
+          <div className="header-links">
+            <a href="/admin/dashboard" className="header-link">Dashboard</a>
+            <a href="/admin/users" className="header-link">Users</a>
+            <a href="/admin/properties" className="header-link">Properties</a>
+          </div>
           <div className="user-info">
             <p className="welcome-text">Welcome, {userName}</p>
             <LogoutButton />

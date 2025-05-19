@@ -1,13 +1,14 @@
 import { getServerSession } from 'next-auth/next';
 import { redirect } from 'next/navigation';
-import authOptions from '../../../app/api/auth/config';
+import authOptions from '../../api/auth/config';
 import Header from '../../../components/Header';
-import WithdrawalsSection from '../../../components/WithdrawalsSection';
-import NotificationsSection from '../../../components/NotificationsSection';
+import UsersSection from '../../../components/UsersSection';
+import VerificationSection from '../../../components/VerificationSection';
+
 
 export const revalidate = 0;
 
-export default async function AdminDashboard() {
+export default async function User() {
   const session = await getServerSession(authOptions);
   
   if (!session || session.user.role !== 'admin') {
@@ -20,14 +21,15 @@ export default async function AdminDashboard() {
       <main className="dashboard-main">
         <div className="dashboard-container">
           <div className="dashboard-content">
-            <h2 className="main-title">Admin Dashboard</h2>
+            <h2 className="main-title">Users</h2>
+            
             <div className="dashboard-section">
-              <h3 className="section-heading">Withdrawals</h3>
-              <WithdrawalsSection />
+              <h3 className="section-heading">User Management</h3>
+              <UsersSection />
             </div>
             <div className="dashboard-section">
-              <h3 className="section-heading">Notifications Section</h3>
-              <NotificationsSection />
+              <h3 className="section-heading">Verification Management</h3>
+              <VerificationSection />
             </div>
           </div>
         </div>

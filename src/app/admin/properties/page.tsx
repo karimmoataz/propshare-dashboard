@@ -2,8 +2,9 @@ import { getServerSession } from 'next-auth/next';
 import { redirect } from 'next/navigation';
 import authOptions from '../../../app/api/auth/config';
 import Header from '../../../components/Header';
-import WithdrawalsSection from '../../../components/WithdrawalsSection';
-import NotificationsSection from '../../../components/NotificationsSection';
+import PropertiesSection from '../../../components/PropertiesSection';
+import PendingSharesProcessor from '../../../components/pendingShares';
+
 
 export const revalidate = 0;
 
@@ -20,14 +21,14 @@ export default async function AdminDashboard() {
       <main className="dashboard-main">
         <div className="dashboard-container">
           <div className="dashboard-content">
-            <h2 className="main-title">Admin Dashboard</h2>
+            <h2 className="main-title">Properties</h2>
             <div className="dashboard-section">
-              <h3 className="section-heading">Withdrawals</h3>
-              <WithdrawalsSection />
+              <h3 className="section-heading">Properties Management</h3>
+              <PropertiesSection />
             </div>
             <div className="dashboard-section">
-              <h3 className="section-heading">Notifications Section</h3>
-              <NotificationsSection />
+              <h3 className="section-heading">Pending Shares</h3>
+              <PendingSharesProcessor />
             </div>
           </div>
         </div>
