@@ -1,7 +1,5 @@
 import type { Metadata } from 'next';
-import './globals.css';
 import AuthProvider from '../components/auth/AuthProvider';
-
 
 export const metadata: Metadata = {
   title: 'Propshare Admin Portal',
@@ -15,6 +13,27 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        {/* ✅ Add Tailwind CDN script */}
+        <script src="https://cdn.tailwindcss.com"></script>
+
+        {/* Optional: Tailwind config override */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              tailwind.config = {
+                theme: {
+                  extend: {
+                    colors: {
+                      customBlue: '#1c61e7',
+                    },
+                  },
+                },
+              }
+            `,
+          }}
+        />
+      </head>
       <body>
         <AuthProvider>{children}</AuthProvider>
       </body>

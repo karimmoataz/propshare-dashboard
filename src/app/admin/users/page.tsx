@@ -1,14 +1,18 @@
 import { getServerSession } from 'next-auth/next';
 import { redirect } from 'next/navigation';
-import authOptions from '../../api/auth/config';
+import authOptions from '../../../app/api/auth/config';
 import Header from '../../../components/Header';
 import UsersSection from '../../../components/UsersSection';
+import PropertiesSection from '../../../components/PropertiesSection';
 import VerificationSection from '../../../components/VerificationSection';
+import NotificationsSection from '@/components/NotificationsSection';
+import WithdrawalsSection from '@/components/WithdrawalsSection';
 
-
+// Set to force revalidation on every request
 export const revalidate = 0;
 
-export default async function User() {
+export default async function AdminDashboard() {
+  // Check if user is authenticated and is admin
   const session = await getServerSession(authOptions);
   
   if (!session || session.user.role !== 'admin') {
@@ -16,20 +20,21 @@ export default async function User() {
   }
   
   return (
-    <div className="admin-dashboard">
-      <Header userName={session.user.name || 'Guest'}/>
-      <main className="dashboard-main">
-        <div className="dashboard-container">
-          <div className="dashboard-content">
-            <h2 className="main-title">Users</h2>
-            
-            <div className="dashboard-section">
-              <h3 className="section-heading">User Management</h3>
-              <UsersSection />
+    <div className="min-h-screen bg-gray-100">
+        <Header userName={session.user.name || 'Guest'}/>
+        <main>
+        <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+          <div className="px-4 py-6 sm:px-0">
+          <h2 className="text-xl font-semibold mb-4">Admin Dashboard</h2>
+            <div className="border-4 border-dashed border-gray-200 rounded-lg p-4 my-5">
+                <div>
+                    <h3 className="mb-1">User Management</h3>
+                    <UsersSection />
+                </div>
             </div>
-            <div className="dashboard-section">
-              <h3 className="section-heading">Verification Management</h3>
-              <VerificationSection />
+            <div className="border-4 border-dashed border-gray-200 rounded-lg p-4 my-5">
+                <h3 className="mb-1">Verification Section</h3>
+                <VerificationSection />
             </div>
           </div>
         </div>

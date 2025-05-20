@@ -8,24 +8,47 @@ interface HeaderProps {
 
 function Header({ userName }: HeaderProps) {
   return (
-    <header className="header">
-      <div className="header-container">
-        <div className="header-content">
-          <Image 
-            src="/logo.png" 
-            alt="Logo" 
-            width={200}
-            height={50}
-            className="logo"
-          />
-          <div className="header-links">
-            <a href="/admin/dashboard" className="header-link">Dashboard</a>
-            <a href="/admin/users" className="header-link">Users</a>
-            <a href="/admin/properties" className="header-link">Properties</a>
+    <header className="bg-white shadow-sm sticky top-0 z-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-16">
+          <div className="flex-shrink-0">
+            <Image  
+              src="/logo.png" 
+              alt="Logo" 
+              width={160}
+              height={40}
+              className="h-10 w-auto"
+            />
           </div>
-          <div className="user-info">
-            <p className="welcome-text">Welcome, {userName}</p>
-            <LogoutButton />
+          
+          <div className="hidden md:flex items-center space-x-8">
+            <nav className="flex space-x-6">
+              <a 
+                href="/admin/dashboard" 
+                className="text-gray-600 hover:text-indigo-600 px-1 py-2 text-sm font-medium transition-colors"
+              >
+                Dashboard
+              </a>
+              <a 
+                href="/admin/users" 
+                className="text-gray-600 hover:text-indigo-600 px-1 py-2 text-sm font-medium transition-colors"
+              >
+                Users
+              </a>
+              <a 
+                href="/admin/properties" 
+                className="text-gray-600 hover:text-indigo-600 px-1 py-2 text-sm font-medium transition-colors"
+              >
+                Properties
+              </a>
+            </nav>
+            
+            <div className="flex items-center border-l pl-6 ml-6 border-gray-200">
+              <span className="text-sm font-medium text-gray-600">Welcome, {userName}</span>
+              <div className="ml-4">
+                <LogoutButton />
+              </div>
+            </div>
           </div>
         </div>
       </div>
