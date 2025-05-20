@@ -89,18 +89,17 @@ export async function POST(
           { status: 400 }
         );
       }
+
+    const rentPerShare = rentAmount / property.numberOfShares;
       
-      // Process each shareholder
-      const updatePromises = [];
-      const transactionPromises = [];
+    const updatePromises = [];
+    const transactionPromises = [];
       
       for (const shareHolder of property.shares) {
         if (shareHolder.shares <= 0) continue;
         
         // Calculate this user's share of the rent
-        const shareamount = rentAmount / property.numberOfShares;
-       // const sharePercentage = shareHolder.shares / totalOwnedShares;
-        const userRentAmount = shareamount * totalOwnedShares;
+        const userRentAmount = rentPerShare * shareHolder.shares;
         
         // Update user balance
         updatePromises.push(

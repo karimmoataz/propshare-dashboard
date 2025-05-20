@@ -103,24 +103,27 @@ export default function VerificationSection() {
                     <div className="flex gap-4">
                       {user.idVerification?.frontId && (
                         <img 
-                          src={user.idVerification.frontId.url?.toString()}
+                          src={user.idVerification.frontId?.toString()}
                           className="h-20 w-32 object-cover border"
+                          style={{width: '100px', height: 'auto'}}
                           alt="Front ID"
                           loading="lazy"
                         />
                       )}
                       {user.idVerification?.backId && (
                         <img 
-                          src={user.idVerification.backId?.url.toString()}
+                          src={user.idVerification.backId?.toString()}
                           className="h-20 w-32 object-cover border"
+                          style={{width: '100px', height: 'auto'}}
                           alt="Back ID"
                           loading="lazy"
                         />
                       )}
                       {user.idVerification?.selfie && (
                         <img 
-                          src={user.idVerification.selfie?.url.toString()}
+                          src={user.idVerification.selfie?.toString()}
                           className="h-20 w-32 object-cover border"
+                          style={{width: '100px', height: 'auto'}}
                           alt="Selfie"
                           loading="lazy"
                         />
@@ -166,24 +169,27 @@ export default function VerificationSection() {
             <div className="flex gap-4 mb-6">
               {selectedUser.idVerification?.frontId && (
                 <img 
-                  src={selectedUser.idVerification.frontId?.url.toString()}
+                  src={selectedUser.idVerification.frontId?.toString()}
                   className="h-48 w-full object-contain border"
+                  style={{width: '100px', height: 'auto'}}
                   alt="Front ID"
                   loading="lazy"
                 />
               )}
               {selectedUser.idVerification?.backId && (
                 <img 
-                  src={selectedUser.idVerification.backId?.url.toString()}
+                  src={selectedUser.idVerification.backId?.toString()}
                   className="h-48 w-full object-contain border"
+                  style={{width: '100px', height: 'auto'}}
                   alt="Back ID"
                   loading="lazy"
                 />
               )}
               {selectedUser.idVerification?.selfie && (
                 <img 
-                  src={selectedUser.idVerification.selfie?.url.toString()}
+                  src={selectedUser.idVerification.selfie?.toString()}
                   className="h-48 w-full object-contain border"
+                  style={{width: '100px', height: 'auto'}}
                   alt="Selfie"
                   loading="lazy"
                 />
