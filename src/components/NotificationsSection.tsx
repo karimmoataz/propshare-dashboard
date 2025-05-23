@@ -264,9 +264,6 @@ export default function NotificationsSection() {
   return (
     <div className="mt-8">
       <div className="flex justify-between items-center mb-4">
-        <div>
-          <h2 className="text-xl font-semibold">Notifications</h2>
-        </div>
         <div className="flex space-x-4">
           <select 
             value={statusFilter}
@@ -289,7 +286,7 @@ export default function NotificationsSection() {
         </div>
       </div>
 
-      <div className="bg-white shadow overflow-hidden rounded-lg">
+      <div className="bg-white shadow rounded-lg">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
@@ -297,7 +294,7 @@ export default function NotificationsSection() {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Message</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Recipient</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Property</th>
+              {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Property</th> */}
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
             </tr>
@@ -325,9 +322,9 @@ export default function NotificationsSection() {
                 <td className="px-6 py-4 whitespace-nowrap">
                   {getUserDisplay(notification)}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
+                {/* <td className="px-6 py-4 whitespace-nowrap">
                   {getPropertyDisplay(notification)}
-                </td>
+                </td> */}
                 <td className="px-6 py-4 whitespace-nowrap">
                   {new Date(notification.createdAt).toLocaleDateString()}
                 </td>

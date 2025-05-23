@@ -25,7 +25,7 @@ export default async function AdminDashboard() {
         <main>
         <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
           <div className="px-4 py-6 sm:px-0">
-          <h2 className="text-xl font-semibold mb-4">Admin Dashboard</h2>
+          <h2 className="text-xl font-semibold mb-4">users Dashboard</h2>
             <div className="border-4 border-dashed border-gray-200 rounded-lg p-4 my-5">
                 <div>
                     <h3 className="mb-1">User Management</h3>

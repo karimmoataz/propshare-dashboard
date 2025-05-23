@@ -44,7 +44,7 @@ const TransactionSchema: Schema = new Schema(
     },
     source: {
       type: String,
-      enum: ['Card', 'Bank', 'Cash', 'Investment', 'Dividend', 'rent'],
+      enum: ['Card', 'Bank', 'Cash', 'Investment', 'Dividend', 'rent', 'Share Sale'],
       required: true,
     },
     description: {
