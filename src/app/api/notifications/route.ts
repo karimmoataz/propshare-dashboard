@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import authOptions from '../auth/config';
 import Notification from '../../../models/Notifications';
+import User from '../../../models/User';
 import dbConnect from '../../../lib/db';
 
 export const dynamic = 'force-dynamic';
@@ -62,7 +63,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// Create a new notification
+// Create a new notification and send to app backend
 export async function POST(request: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session || session.user.role !== 'admin') {
@@ -93,8 +94,34 @@ export async function POST(request: NextRequest) {
       
       await notification.save();
       
+      // Send to app backend for push notification processing
+      try {
+        const appBackendResponse = await fetch('https://admin.propshare.online/notifications/send-push', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Dashboard-Auth': process.env.DASHBOARD_API_KEY || 'dashboard-secret-key'
+          },
+          body: JSON.stringify({
+            title,
+            message,
+            propertyId: propertyId || null,
+            isGlobal: true,
+            notificationId: notification._id.toString()
+          })
+        });
+
+        if (!appBackendResponse.ok) {
+          console.error('Failed to send push notification via app backend');
+          const errorText = await appBackendResponse.text();
+          console.error('App backend error:', errorText);
+        }
+      } catch (pushError) {
+        console.error('Error sending push notification:', pushError);
+      }
+      
       return NextResponse.json({
-        message: 'Global notification created successfully',
+        message: 'Global notification created and push notification sent',
         notification
       }, { status: 201 });
     }
@@ -108,6 +135,7 @@ export async function POST(request: NextRequest) {
     }
     
     const notifications = [];
+    const pushNotificationPromises = [];
     
     // Create a notification for each user
     for (const userId of userIds) {
@@ -121,10 +149,34 @@ export async function POST(request: NextRequest) {
       
       await notification.save();
       notifications.push(notification);
+
+      // Send to app backend for push notification processing
+      pushNotificationPromises.push(
+        fetch('https://admin.propshare.online/notifications/send-push', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Dashboard-Auth': process.env.DASHBOARD_API_KEY || 'dashboard-secret-key'
+          },
+          body: JSON.stringify({
+            title,
+            message,
+            propertyId: propertyId || null,
+            isGlobal: false,
+            userId,
+            notificationId: notification._id.toString()
+          })
+        }).catch(error => {
+          console.error(`Error sending push notification for user ${userId}:`, error);
+        })
+      );
     }
+
+    // Wait for all push notifications to be sent
+    await Promise.allSettled(pushNotificationPromises);
     
     return NextResponse.json({
-      message: 'Notifications created successfully',
+      message: 'Notifications created and push notifications sent',
       count: notifications.length
     }, { status: 201 });
     
