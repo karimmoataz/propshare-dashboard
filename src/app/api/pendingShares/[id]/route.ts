@@ -57,7 +57,7 @@ export async function POST(
     }
     
     // 3. Check if there are enough available shares
-    if (property.availableShares < pendingShare.shares) {
+    if (property.availableShares <= pendingShare.shares) {
       await mongooseSession.abortTransaction();
       mongooseSession.endSession();
       return NextResponse.json({ 
