@@ -75,7 +75,7 @@ export async function POST(
     }
     
     // Check if user has enough pending investment
-    if (user.pendingInvestment < pendingShare.totalCost) {
+    if (user.pendingInvestment <= pendingShare.totalCost) {
       await mongooseSession.abortTransaction();
       mongooseSession.endSession();
       return NextResponse.json({ 
