@@ -57,7 +57,7 @@ export async function POST(
     }
     
     // 3. Check if there are enough available shares
-    if (property.availableShares <= pendingShare.shares) {
+    if (property.availableShares < pendingShare.shares) {
       await mongooseSession.abortTransaction();
       mongooseSession.endSession();
       return NextResponse.json({ 
@@ -75,7 +75,7 @@ export async function POST(
     }
     
     // Check if user has enough pending investment
-    if (user.pendingInvestment <= pendingShare.totalCost) {
+    if (user.pendingInvestment < pendingShare.totalCost) {
       await mongooseSession.abortTransaction();
       mongooseSession.endSession();
       return NextResponse.json({ 
