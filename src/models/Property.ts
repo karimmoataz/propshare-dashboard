@@ -15,6 +15,7 @@ export interface IProperty extends Document {
         }
     ];
     location: string;
+    developer:string;
     area: number;
     floors: number;
     rooms: number;
@@ -67,6 +68,7 @@ const PropertySchema = new Schema<IProperty>({
         date: { type: Date, required: true }
     }],
     location: { type: String, required: true },
+    developer: { type: String, required: false },
     area: { type: Number, required: true },
     floors: { type: Number, required: true },
     rooms: { type: Number, required: true },

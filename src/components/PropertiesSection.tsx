@@ -641,6 +641,15 @@ function PropertyForm({
               required
             />
           </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">developer *</label>
+            <input
+              name="developer"
+              defaultValue={initialData?.developer || ''}
+              className="mt-1 block w-full border rounded-md p-2"
+              required
+            />
+          </div>
 
           <div className="grid grid-cols-3 gap-4">
             <div>

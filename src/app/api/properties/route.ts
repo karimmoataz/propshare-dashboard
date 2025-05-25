@@ -123,7 +123,7 @@ export async function POST(req: Request) {
         }
 
         // Validate text fields
-        const textFields = ['name', 'location'];
+        const textFields = ['name', 'location' , 'developer'];
         for (const field of textFields) {
             if (!formData.get(field)?.toString().trim()) {
                 return NextResponse.json(
@@ -144,6 +144,7 @@ export async function POST(req: Request) {
             currentPriceDate: new Date(),
             previousPrices: [],
             location: formData.get('location')!.toString(),
+            developer: formData.get('developer')!.toString(),
             area: fieldValues.area,
             floors: fieldValues.floors,
             rooms: fieldValues.rooms,

@@ -31,6 +31,7 @@ export async function PUT(
       currentPriceDate: Date;
       sharePrice: number;
       location: string;
+      developer: string;
       area: number;
       floors: number;
       rooms: number;
@@ -53,6 +54,7 @@ export async function PUT(
       currentPriceDate: new Date(),
       sharePrice: 0, // Will be calculated below
       location: formData.get('location')?.toString() || currentProperty.location,
+      developer: formData.get('developer')?.toString() || currentProperty.developer,
       area: Number(formData.get('area')) || currentProperty.area,
       floors: Number(formData.get('floors')) || currentProperty.floors,
       rooms: Number(formData.get('rooms')) || currentProperty.rooms,
