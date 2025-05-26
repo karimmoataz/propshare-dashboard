@@ -68,6 +68,7 @@ export async function POST(
     }
 
     user.balance -= withdrawal.amount;
+    user.outcome -= withdrawal.amount;
     await user.save({ session: mongooseSession });
 
     const transactionId = new mongoose.Types.ObjectId();
@@ -125,23 +126,20 @@ export async function DELETE(
       return NextResponse.json({ error: 'Withdrawal not found' }, { status: 404 });
     }
 
-    // Corrected user reference
-    if (!withdrawal.userId) {
-      withdrawal.status = 'rejected';
-      withdrawal.processedBy = session.user.id;
-      withdrawal.processedAt = new Date();
-      withdrawal.notes = 'Withdrawal rejected - no associated user found';
-      await withdrawal.save({ session: mongooseSession });
-      
-      await mongooseSession.commitTransaction();
-      return NextResponse.json({ 
-        message: 'Withdrawal rejected - no associated user' 
-      });
-    }
-
     if (withdrawal.status !== 'pending') {
       await mongooseSession.abortTransaction();
       return NextResponse.json({ error: 'Withdrawal already processed' }, { status: 400 });
+    }
+
+    // Find and update user if withdrawal has a valid user reference
+    if (withdrawal.userId && mongoose.Types.ObjectId.isValid(withdrawal.userId)) {
+      const user = await User.findById(withdrawal.userId).session(mongooseSession);
+      
+      if (user) {
+        // Reduce the outcome when rejecting the withdrawal
+        user.outcome -= withdrawal.amount;
+        await user.save({ session: mongooseSession });
+      }
     }
 
     withdrawal.status = 'rejected';
